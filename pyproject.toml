@@ -1,0 +1,142 @@
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+# ---------------------------------------------------------------------------
+# Project metadata
+# ---------------------------------------------------------------------------
+
+[project]
+name = "sld_resurrect"
+version = "0.1.0"
+description = "Modern reanalysis tooling for the SLAC Large Detector (SLD) dataset"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Alkaid Cheng", email = "alkaidc@stanford.edu" },
+]
+keywords = [
+    "physics",
+    "high-energy-physics",
+    "particle-physics",
+    "sld",
+    "slac",
+    "z-pole",
+    "event-shapes",
+    "thrust",
+    "asymmetry",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+# Runtime dependencies. These are the minimum needed to import
+# ``sld_resurrect`` and use its public API. Notebook-only dependencies are
+# in the ``[notebook]`` extra.
+dependencies = [
+    "awkward>=2.0",
+    "numpy>=1.24",
+    "numba>=0.58",
+    "vector>=1.1",
+    "pandas>=2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/TODO/sld_resurrect"
+Repository = "https://github.com/TODO/sld_resurrect"
+Issues = "https://github.com/TODO/sld_resurrect/issues"
+
+# ---------------------------------------------------------------------------
+# Optional dependency groups
+# ---------------------------------------------------------------------------
+
+[project.optional-dependencies]
+# Everything needed to run the example notebooks under examples/.
+notebook = [
+    "jupyter>=1.0",
+    "ipykernel>=6.0",
+    "tqdm>=4.65",
+    "matplotlib>=3.7",
+    "fastjet>=3.4",
+    "jazelle",
+    "quickstats",
+    "aliad"
+]
+
+# Local development tooling.
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+
+# Convenience: install everything.
+all = [
+    "sld_resurrect[notebook,dev]",
+]
+
+# ---------------------------------------------------------------------------
+# Hatchling build configuration
+# ---------------------------------------------------------------------------
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sld_resurrect"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/sld_resurrect",
+    "examples/*.ipynb",
+    "README.md",
+    "LICENSE",
+]
+
+# ---------------------------------------------------------------------------
+# Tooling configuration (kept here so the repo stays single-file-config)
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "N803",  # argument name should be lowercase (physics conventions: T, E_CM, ...)
+    "N806",  # variable in function should be lowercase (same)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"examples/*.ipynb" = ["E402", "F401", "F811"]  # notebook conventions
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.mypy]
+python_version = "3.10"
+strict = false
+warn_unused_ignores = true
+warn_redundant_casts = true
+ignore_missing_imports = true  # awkward / vector / numba lack complete stubs

@@ -1,0 +1,34 @@
+# Build artefacts
+build/
+dist/
+*.egg-info/
+*.egg
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Editable-install metadata
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Notebook checkpoints / scratch outputs
+.ipynb_checkpoints/
+*.parquet
+*.feather
+*.h5
+*.npy
+*.npz
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
