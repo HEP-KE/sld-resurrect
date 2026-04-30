@@ -1,15 +1,11 @@
 [build-system]
-requires = ["hatchling>=1.18"]
-build-backend = "hatchling.build"
-
-# ---------------------------------------------------------------------------
-# Project metadata
-# ---------------------------------------------------------------------------
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "sld_resurrect"
 version = "0.1.0"
-description = "Modern reanalysis tooling for the SLAC Large Detector (SLD) dataset"
+description = "Modern reanalysis tooling for the SLAC Large Detector (SLD) experiment."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -17,126 +13,117 @@ authors = [
     { name = "Alkaid Cheng", email = "alkaidc@stanford.edu" },
 ]
 keywords = [
-    "physics",
-    "high-energy-physics",
     "particle-physics",
-    "sld",
-    "slac",
-    "z-pole",
-    "event-shapes",
-    "thrust",
-    "asymmetry",
+    "high-energy-physics",
+    "SLD",
+    "SLAC",
+    "Z-pole",
+    "OmniLearn",
+    "foundation-model",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
-# Runtime dependencies. These are the minimum needed to import
-# ``sld_resurrect`` and use its public API. Notebook-only dependencies are
-# in the ``[notebook]`` extra.
+# Core analysis dependencies. The ML / OmniLearn-specific packages are
+# split off into the [project.optional-dependencies] groups below so
+# someone running just the data-analysis notebook doesn't have to
+# install PyTorch.
 dependencies = [
     "awkward>=2.0",
     "numpy>=1.24",
-    "numba>=0.58",
-    "vector>=1.1",
     "pandas>=2.0",
+    "h5py>=3.8",
+    "uproot>=5.0",
+    "vector>=1.0",
+    "fastjet>=3.4",
+    "tqdm>=4.65",
+    "requests>=2.28",
+    "pyarrow>=14.0",        # parquet I/O for jazelle reader
+    "aliad",                # awkward stack/pad helpers
+    "quickstats",           # plotting + style
+    "jazelle",              # SLD bank reader
 ]
-
-[project.urls]
-Homepage = "https://github.com/TODO/sld_resurrect"
-Repository = "https://github.com/TODO/sld_resurrect"
-Issues = "https://github.com/TODO/sld_resurrect/issues"
-
-# ---------------------------------------------------------------------------
-# Optional dependency groups
-# ---------------------------------------------------------------------------
 
 [project.optional-dependencies]
-# Everything needed to run the example notebooks under examples/.
-notebook = [
-    "jupyter>=1.0",
-    "ipykernel>=6.0",
-    "tqdm>=4.65",
-    "matplotlib>=3.7",
-    "fastjet>=3.4",
-    "jazelle",
-    "quickstats",
-    "aliad"
+# OmniLearn inference (CPU- or GPU-side). Torch wheels are platform-
+# dependent; we leave version selection to the user's pip extras.
+ml = [
+    "torch>=2.0",
+    "omnilearned",
 ]
-
-# Local development tooling.
+# Dimensionality reduction. cuML (the GPU path in `reduction.py`) is
+# pulled in via `pip install sld_resurrect[ml-gpu]`, which is a
+# super-set of [ml] plus cuML's RAPIDS index.
+reduce = [
+    "scikit-learn>=1.3",
+    "openTSNE>=1.0",
+    "umap-learn>=0.5",
+]
+ml-gpu = [
+    "torch>=2.0",
+    "omnilearned",
+    "scikit-learn>=1.3",
+]
+# Development tools.
 dev = [
     "pytest>=7.0",
-    "pytest-cov>=4.0",
-    "ruff>=0.5",
-    "mypy>=1.10",
+    "ruff>=0.1",
+    "mypy>=1.5",
+    "nbformat>=5.9",
+    "jupyterlab>=4.0",
 ]
-
-# Convenience: install everything.
+# Sentinel "all" group for convenience installs.
 all = [
-    "sld_resurrect[notebook,dev]",
+    "sld_resurrect[ml]",
+    "sld_resurrect[reduce]",
 ]
 
-# ---------------------------------------------------------------------------
-# Hatchling build configuration
-# ---------------------------------------------------------------------------
+[project.scripts]
+# Single console entry point; subcommands dispatched in cli/_main.py.
+sld-resurrect = "sld_resurrect.cli._main:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/sld_resurrect"]
-
-[tool.hatch.build.targets.sdist]
-include = [
-    "src/sld_resurrect",
-    "examples/*.ipynb",
-    "README.md",
-    "LICENSE",
-]
+[project.urls]
+Homepage = "https://github.com/AlkaidCheng/sld_resurrect"
+Documentation = "https://github.com/AlkaidCheng/sld_resurrect#readme"
+Repository = "https://github.com/AlkaidCheng/sld_resurrect"
+Issues = "https://github.com/AlkaidCheng/sld_resurrect/issues"
 
 # ---------------------------------------------------------------------------
-# Tooling configuration (kept here so the repo stays single-file-config)
+# Tooling configuration
 # ---------------------------------------------------------------------------
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.ruff]
-line-length = 88
+line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
-    "F",   # pyflakes
-    "I",   # isort
-    "N",   # pep8-naming
-    "UP",  # pyupgrade
-    "B",   # flake8-bugbear
-    "SIM", # flake8-simplify
+    "E", "F", "W",  # pycodestyle + pyflakes
+    "I",            # isort
+    "B",            # bugbear
+    "UP",           # pyupgrade
+    "SIM",          # simplify
 ]
 ignore = [
-    "E501",  # line too long (handled by formatter)
-    "N803",  # argument name should be lowercase (physics conventions: T, E_CM, ...)
-    "N806",  # variable in function should be lowercase (same)
+    "E501",  # line length handled by formatter
 ]
-
-[tool.ruff.lint.per-file-ignores]
-"examples/*.ipynb" = ["E402", "F401", "F811"]  # notebook conventions
-
-[tool.pytest.ini_options]
-minversion = "7.0"
-testpaths = ["tests"]
-addopts = "-ra --strict-markers"
 
 [tool.mypy]
 python_version = "3.10"
-strict = false
-warn_unused_ignores = true
-warn_redundant_casts = true
-ignore_missing_imports = true  # awkward / vector / numba lack complete stubs
+warn_unused_configs = true
+ignore_missing_imports = true   # awkward / vector / fastjet / cuml are weakly typed
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q"
