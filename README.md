@@ -277,6 +277,6 @@ The OmniLearn foundation model:
 The reference experimental datasets used for the cross-experiment
 comparison:
 
-* **JetClass1** -- <https://github.com/jet-universe/jetclass1>
-* **H1 DIS Open Data** -- <https://github.com/H1Collaboration/openh1-dis>
-* **ALEPH MC Z-pole sample** -- LEP1 archive
+* **JetClass1** -- <https://zenodo.org/records/6619768>
+* **H1 DIS Open Data** -- <https://portal.nersc.gov/cfs/dasrepo/omnilearned/h1/>
+* **ALEPH MC Z-pole sample** -- Not Available Yet
