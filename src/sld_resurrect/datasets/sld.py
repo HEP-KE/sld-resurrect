@@ -141,4 +141,4 @@ def _write_array(
     path = os.path.join(output_dir, f"{stem}.h5")
     with h5py.File(path, "w") as f:
         f.create_dataset("data", data=array)
-    return os.path.abspath(path)
+    return path

@@ -2,7 +2,10 @@
 
 Each ``preset_*`` function returns a ``(Selection, TrackQualityCuts)`` pair
 that reproduces the cuts used in one published SLD paper. Presets are
-registered in :data:`PRESETS` and looked up by :func:`make_selector`.
+registered in :data:`PRESETS` and instantiated through the classmethods
+:meth:`sld_resurrect.event_view.EventView.from_preset` (observables only)
+and :meth:`sld_resurrect.selector.EventSelector.from_preset` (observables
+plus the preset's cut list).
 
 Preset registry
 ---------------
@@ -38,14 +41,8 @@ from typing import Callable
 import awkward as ak
 import numpy as np
 
-from .selector import (
-    COS_30_DEG,
-    CutGroup,
-    CutSpec,
-    EventSelector,
-    Selection,
-    TrackQualityCuts,
-)
+from .selector import CutGroup, CutSpec, Selection
+from .track_quality import COS_30_DEG, TrackQualityCuts
 
 
 # ---------------------------------------------------------------------------
@@ -392,46 +389,3 @@ PRESETS: dict[str, PresetFactory] = {
     "leptonic_1997_mumu":   preset_leptonic_1997_mumu,
     "leptonic_1997_tautau": preset_leptonic_1997_tautau,
 }
-
-
-def make_selector(
-    preset: str,
-    data: ak.Array,
-    particles: ak.Array,
-    *,
-    track_quality: TrackQualityCuts | None = None,
-) -> EventSelector:
-    """Look up a named preset and return a configured EventSelector.
-
-    Parameters
-    ----------
-    preset : str
-        Preset name (key of :data:`PRESETS`).
-    data : ak.Array
-        Full event record (passed to :class:`EventSelector`).
-    particles : ak.Array
-        Inclusive particle list (passed to :class:`EventSelector`).
-    track_quality : TrackQualityCuts, optional
-        Override the preset's default track quality (useful for systematics).
-
-    Returns
-    -------
-    EventSelector
-        A configured selector ready to evaluate.
-
-    Raises
-    ------
-    KeyError
-        If ``preset`` is not in :data:`PRESETS`.
-    """
-    if preset not in PRESETS:
-        raise KeyError(
-            f"Unknown preset {preset!r}. Available: {sorted(PRESETS)}"
-        )
-    cuts, default_quality = PRESETS[preset]()
-    return EventSelector(
-        data=data,
-        particles=particles,
-        cuts=cuts,
-        track_quality=track_quality if track_quality is not None else default_quality,
-    )
