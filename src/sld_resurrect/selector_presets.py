@@ -38,7 +38,6 @@ from __future__ import annotations
 
 from typing import Callable
 
-import awkward as ak
 import numpy as np
 
 from .selector import CutGroup, CutSpec, Selection
