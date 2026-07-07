@@ -20,7 +20,6 @@ from dataclasses import dataclass, replace
 import awkward as ak
 import numpy as np
 
-
 # Pre-computed cos(30 deg), used by the 1994/2000 A_LR track-quality cuts.
 COS_30_DEG: float = float(np.cos(np.deg2rad(30.0)))
 
@@ -75,7 +74,7 @@ class TrackQualityCuts:
             or self.max_d3 is not None
         )
 
-    def with_overrides(self, **changes: object) -> "TrackQualityCuts":
+    def with_overrides(self, **changes: object) -> TrackQualityCuts:
         """Return a copy with the given fields replaced.
 
         Useful for systematics studies, e.g.::
@@ -166,11 +165,7 @@ def build_track_quality_mask(
 
     # All distance cuts are measured relative to the per-event IP. Read it
     # once so the three branches below share the same coordinates.
-    needs_ip = (
-        cuts.max_r is not None
-        or cuts.max_abs_z is not None
-        or cuts.max_d3 is not None
-    )
+    needs_ip = cuts.max_r is not None or cuts.max_abs_z is not None or cuts.max_d3 is not None
     if needs_ip:
         ip_x, ip_y, ip_z, valid_ip = _ip_position(data)
         dx = particles.vx - ip_x
@@ -178,14 +173,14 @@ def build_track_quality_mask(
         dz = particles.vz - ip_z
 
         if cuts.max_r is not None:
-            r = np.sqrt(dx ** 2 + dy ** 2)
+            r = np.sqrt(dx**2 + dy**2)
             mask = mask & (r < cuts.max_r)
 
         if cuts.max_abs_z is not None:
             mask = mask & (np.abs(dz) < cuts.max_abs_z)
 
         if cuts.max_d3 is not None:
-            d3 = np.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
+            d3 = np.sqrt(dx**2 + dy**2 + dz**2)
             mask = mask & (d3 < cuts.max_d3)
 
         # Events with no measured IP fail every track. ``valid_ip`` is a

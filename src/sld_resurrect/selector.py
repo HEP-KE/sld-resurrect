@@ -15,14 +15,13 @@ all see exactly the same set of tracks.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, cast
 
 import awkward as ak
 import numpy as np
 
 from .event_view import EventView
 from .track_quality import TrackQualityCuts
-
 
 # ---------------------------------------------------------------------------
 # Cut specifications and groups
@@ -73,7 +72,7 @@ class CutSpec:
         if self.op == "!=":
             return values != threshold
         if self.op == "between":
-            lo, hi = threshold  # type: ignore[misc]
+            lo, hi = cast("tuple[float, float]", threshold)
             return (values >= lo) & (values <= hi)
         raise ValueError(f"Unknown comparison operator: {self.op!r}")
 
@@ -106,6 +105,7 @@ Selection = list  # list[CutSpec | CutGroup]
 # ---------------------------------------------------------------------------
 # Event selector
 # ---------------------------------------------------------------------------
+
 
 class EventSelector(EventView):
     """Apply event-level cuts to an awkward event sample.
@@ -147,7 +147,7 @@ class EventSelector(EventView):
         particles: ak.Array,
         *,
         track_quality: TrackQualityCuts | None = None,
-    ) -> "EventSelector":
+    ) -> EventSelector:
         """Build an :class:`EventSelector` configured from a named preset.
 
         Uses both the preset's *event-level cut list* and its
@@ -173,17 +173,13 @@ class EventSelector(EventView):
         from .selector_presets import PRESETS
 
         if preset not in PRESETS:
-            raise KeyError(
-                f"Unknown preset {preset!r}. Available: {sorted(PRESETS)}"
-            )
+            raise KeyError(f"Unknown preset {preset!r}. Available: {sorted(PRESETS)}")
         cuts, default_quality = PRESETS[preset]()
         return cls(
             data=data,
             particles=particles,
             cuts=cuts,
-            track_quality=(
-                track_quality if track_quality is not None else default_quality
-            ),
+            track_quality=(track_quality if track_quality is not None else default_quality),
         )
 
     def __repr__(self) -> str:
@@ -209,8 +205,7 @@ class EventSelector(EventView):
                 return np.logical_or.reduce(member_masks)
             raise ValueError(f"Unknown combine mode: {element.combine!r}")
         raise TypeError(
-            f"Selection element must be CutSpec or CutGroup, "
-            f"got {type(element).__name__}"
+            f"Selection element must be CutSpec or CutGroup, got {type(element).__name__}"
         )
 
     # ------------------------------------------------------------------ application
@@ -249,13 +244,12 @@ class EventSelector(EventView):
         rows = self.cutflow()
         name_w = max(len(str(r["cut"])) for r in rows) + 2
         desc_w = max(len(str(r["description"])) for r in rows) + 2
-        print(f"{'Cut':<{name_w}}{'Description':<{desc_w}}"
-              f"{'Passed':>10}{'Efficiency':>14}")
+        print(f"{'Cut':<{name_w}}{'Description':<{desc_w}}{'Passed':>10}{'Efficiency':>14}")
         print("-" * (name_w + desc_w + 24))
         for row in rows:
             print(
-                f"{str(row['cut']):<{name_w}}"
-                f"{str(row['description']):<{desc_w}}"
+                f"{row['cut']!s:<{name_w}}"
+                f"{row['description']!s:<{desc_w}}"
                 f"{row['passed']:>10,d}"
                 f"{row['efficiency']:>13.2%}"
             )

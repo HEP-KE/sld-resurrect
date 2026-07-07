@@ -12,27 +12,26 @@ from __future__ import annotations
 
 import gc
 import os
-from typing import Optional, Union
 
 import torch
 import torch.distributed as dist
 from torch.utils.data import DataLoader, DistributedSampler, TensorDataset
 from tqdm.auto import tqdm
 
-
 __all__ = [
-    "setup_distributed",
-    "cleanup_distributed",
-    "is_main_process",
     "batched_inference",
     "batched_inference_distributed",
+    "cleanup_distributed",
+    "is_main_process",
     "release_memory",
+    "setup_distributed",
 ]
 
 
 # ---------------------------------------------------------------------------
 # Distributed helpers
 # ---------------------------------------------------------------------------
+
 
 def setup_distributed() -> int:
     """Initialise the NCCL process group and bind this process to its GPU.
@@ -64,11 +63,12 @@ def is_main_process() -> bool:
 # Inference -- single device
 # ---------------------------------------------------------------------------
 
+
 def batched_inference(
     model: torch.nn.Module,
     data: torch.Tensor,
     batch_size: int = 64,
-    device: Optional[Union[str, torch.device]] = None,
+    device: str | torch.device | None = None,
     show_progress: bool = True,
 ) -> torch.Tensor:
     """Run ``model`` on ``data`` in batches on a single device.
@@ -110,11 +110,12 @@ def batched_inference(
 # Inference -- multi-GPU via torchrun
 # ---------------------------------------------------------------------------
 
+
 def _gather_in_input_order(
     local_results: torch.Tensor,
     n_total: int,
     world_size: int,
-) -> Optional[torch.Tensor]:
+) -> torch.Tensor | None:
     """Gather per-rank tensors and reorder them into the original input order.
 
     NCCL only supports GPU tensors, so a separate Gloo group is used for
@@ -135,7 +136,7 @@ def _gather_in_input_order(
     local_size = torch.tensor([local_results.shape[0]], dtype=torch.long)
     all_sizes = [torch.zeros(1, dtype=torch.long) for _ in range(world_size)]
     dist.all_gather(all_sizes, local_size, group=cpu_group)
-    sizes = [s.item() for s in all_sizes]
+    sizes = [int(s.item()) for s in all_sizes]
 
     # Pad each rank's tensor to the maximum size so we can use dist.gather.
     max_size = max(sizes)
@@ -143,21 +144,16 @@ def _gather_in_input_order(
     padded = torch.zeros(output_shape, dtype=local_results.dtype)
     padded[: local_results.shape[0]] = local_results
 
-    gathered = (
-        [torch.zeros_like(padded) for _ in range(world_size)]
-        if global_rank == 0
-        else None
-    )
+    gathered = [torch.zeros_like(padded) for _ in range(world_size)] if global_rank == 0 else None
     dist.gather(padded, gathered, dst=0, group=cpu_group)
 
     if global_rank != 0:
         return None
+    assert gathered is not None  # populated exactly on global rank 0
 
     # Reassemble in input order. trimmed[r] are the real samples held by rank r.
     trimmed = [gathered[r][: sizes[r]] for r in range(world_size)]
-    in_order = torch.zeros(
-        n_total, *local_results.shape[1:], dtype=local_results.dtype
-    )
+    in_order = torch.zeros(n_total, *local_results.shape[1:], dtype=local_results.dtype)
     for rank in range(world_size):
         rank_indices = list(range(rank, n_total, world_size))
         in_order[rank_indices] = trimmed[rank][: len(rank_indices)]
@@ -170,7 +166,7 @@ def batched_inference_distributed(
     batch_size: int = 256,
     num_workers: int = 2,
     show_progress: bool = True,
-) -> Optional[torch.Tensor]:
+) -> torch.Tensor | None:
     """Run ``model`` on ``data`` distributed across multiple GPUs.
 
     Must be called inside a ``torchrun`` process group; see
@@ -201,7 +197,7 @@ def batched_inference_distributed(
     model.to(local_rank)
     model.eval()
 
-    sampler = DistributedSampler(
+    sampler: DistributedSampler[tuple[torch.Tensor, ...]] = DistributedSampler(
         TensorDataset(data),
         num_replicas=world_size,
         rank=global_rank,
@@ -214,11 +210,7 @@ def batched_inference_distributed(
         num_workers=num_workers,
         pin_memory=True,
     )
-    iterable = (
-        tqdm(loader, desc="Inference")
-        if show_progress and global_rank == 0
-        else loader
-    )
+    iterable = tqdm(loader, desc="Inference") if show_progress and global_rank == 0 else loader
 
     local_outputs: list[torch.Tensor] = []
     with torch.no_grad():
@@ -228,14 +220,13 @@ def batched_inference_distributed(
     local_results = torch.cat(local_outputs, dim=0)
     torch.cuda.empty_cache()
 
-    return _gather_in_input_order(
-        local_results, n_total=data.shape[0], world_size=world_size
-    )
+    return _gather_in_input_order(local_results, n_total=data.shape[0], world_size=world_size)
 
 
 # ---------------------------------------------------------------------------
 # Misc
 # ---------------------------------------------------------------------------
+
 
 def release_memory(*objs: object) -> None:
     """Free Python references and trigger CUDA cache release."""

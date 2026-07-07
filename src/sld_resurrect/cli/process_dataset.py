@@ -10,13 +10,13 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-
 __all__ = ["add_parser"]
 
 
 # ---------------------------------------------------------------------------
 # Shared argument groups
 # ---------------------------------------------------------------------------
+
 
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
     """Add ``--max-events`` and ``--max-particles`` to a sub-subparser."""
@@ -69,9 +69,10 @@ def _add_strategy_args(parser: argparse.ArgumentParser) -> None:
 # Output writing
 # ---------------------------------------------------------------------------
 
+
 def _write_h5(path: Path, array) -> None:
     """Write a single (n, p, f) array under the conventional ``data`` key."""
-    import h5py  # noqa: PLC0415
+    import h5py
 
     path.parent.mkdir(parents=True, exist_ok=True)
     with h5py.File(path, "w") as f:
@@ -82,6 +83,7 @@ def _write_h5(path: Path, array) -> None:
 # ---------------------------------------------------------------------------
 # JetClass1
 # ---------------------------------------------------------------------------
+
 
 def _jetclass1_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     p = subparsers.add_parser(
@@ -116,6 +118,7 @@ def _run_jetclass1(args: argparse.Namespace) -> int:
 # H1
 # ---------------------------------------------------------------------------
 
+
 def _h1_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     p = subparsers.add_parser(
         "h1",
@@ -149,6 +152,7 @@ def _run_h1(args: argparse.Namespace) -> int:
 # ALEPH
 # ---------------------------------------------------------------------------
 
+
 def _aleph_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     p = subparsers.add_parser(
         "aleph",
@@ -166,9 +170,7 @@ def _aleph_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentPa
     p.add_argument(
         "output",
         type=Path,
-        help=(
-            "Output HDF5 file (or stem for the two hemisphere outputs)."
-        ),
+        help=("Output HDF5 file (or stem for the two hemisphere outputs)."),
     )
     _add_common_args(p)
     _add_strategy_args(p)
@@ -200,6 +202,7 @@ def _run_aleph(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 # SLD -- runs the full pipeline (load + select + cluster + all 3 strategies)
 # ---------------------------------------------------------------------------
+
 
 def _sld_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     p = subparsers.add_parser(
@@ -278,12 +281,11 @@ def _run_sld(args: argparse.Namespace) -> int:
     import glob
 
     import awkward as ak
-    import jazelle
-    from tqdm.auto import tqdm
-
     import fastjet
+    import jazelle
     from fastjet._pyjet import AwkwardClusterSequence
     from fastjet._swig import JetDefinition
+    from tqdm.auto import tqdm
 
     from sld_resurrect.datasets import save_strategy_outputs
     from sld_resurrect.kinematics import build_particles
@@ -292,13 +294,16 @@ def _run_sld(args: argparse.Namespace) -> int:
     # ---- Load parquet shards (lazy: stop once max_events is reached) ----
     files = sorted(glob.glob(str(args.input_dir / args.pattern)))
     if not files:
-        raise FileNotFoundError(
-            f"No files matching {args.pattern!r} under {args.input_dir!r}"
-        )
+        raise FileNotFoundError(f"No files matching {args.pattern!r} under {args.input_dir!r}")
 
     requested_banks = [
-        "IEVENTH", "PHBM", "PHPSUM", "PHCHRG",
-        "PHKLUS", "PHPOINT", "PHWIC",
+        "IEVENTH",
+        "PHBM",
+        "PHPSUM",
+        "PHCHRG",
+        "PHKLUS",
+        "PHPOINT",
+        "PHWIC",
     ]
     arrays: list = []
     n_loaded = 0
@@ -345,7 +350,7 @@ def _run_sld(args: argparse.Namespace) -> int:
         output_dir=args.output_dir,
         strategies=tuple(args.strategies),
         max_particles=args.max_particles,
-        name_prefix=args.name_prefix
+        name_prefix=args.name_prefix,
     )
     print("\nFinished. Output files:")
     for label, path in written.items():
@@ -356,6 +361,7 @@ def _run_sld(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 # Top-level wiring
 # ---------------------------------------------------------------------------
+
 
 def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser = subparsers.add_parser(

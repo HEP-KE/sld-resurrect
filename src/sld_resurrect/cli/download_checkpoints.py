@@ -12,7 +12,6 @@ from sld_resurrect.models.checkpoints import (
 )
 from sld_resurrect.paths import OMNILEARN_CHECKPOINT_DIR
 
-
 __all__ = ["add_parser", "run"]
 
 
@@ -61,10 +60,7 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
 
 
 def run(args: argparse.Namespace) -> int:
-    urls = [
-        checkpoint_url(CHECKPOINT_FILES[_SIZE_FULL[s]])
-        for s in args.sizes
-    ]
+    urls = [checkpoint_url(CHECKPOINT_FILES[_SIZE_FULL[s]]) for s in args.sizes]
 
     print(f"Downloading {len(urls)} checkpoint(s) to {args.checkpoint_dir}:")
     for url in urls:
@@ -75,7 +71,7 @@ def run(args: argparse.Namespace) -> int:
         target_dir=args.checkpoint_dir,
         max_workers=args.max_workers,
     )
-    print(f"\nFinished. Files at:")
+    print("\nFinished. Files at:")
     for path in paths:
         print(f"  {path}")
     return 0

@@ -23,7 +23,8 @@ computed from the *quality-selected* charged tracks defined by
 
 from __future__ import annotations
 
-from typing import Callable, TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import awkward as ak
 import numpy as np
@@ -60,6 +61,7 @@ LAC_HAD_LAYERS: tuple[int, ...] = (2, 3, 4, 5, 6, 7)
 # Cluster-energy lookup helpers (used by the LAC-per-track quantities)
 # ---------------------------------------------------------------------------
 
+
 def _flat_id_lookup(
     ref_ids_flat: np.ndarray,
     ref_event_idx: np.ndarray,
@@ -93,11 +95,13 @@ def _flat_id_lookup(
     src_counts = np.diff(src_offsets)
     src_event_idx = np.repeat(np.arange(len(src_counts)), src_counts)
 
-    mult = np.int64(max(
-        int(src_ids_flat.max()) + 1 if n_src_flat else 1,
-        int(ref_ids_flat.max()) + 1 if len(ref_ids_flat) else 1,
-        1,
-    ))
+    mult = np.int64(
+        max(
+            int(src_ids_flat.max()) + 1 if n_src_flat else 1,
+            int(ref_ids_flat.max()) + 1 if len(ref_ids_flat) else 1,
+            1,
+        )
+    )
     src_composite = src_event_idx.astype(np.int64) * mult + src_ids_flat.astype(np.int64)
     ref_composite = ref_event_idx.astype(np.int64) * mult + ref_ids_flat.astype(np.int64)
 
@@ -114,6 +118,7 @@ def _flat_id_lookup(
 # ---------------------------------------------------------------------------
 # EventView
 # ---------------------------------------------------------------------------
+
 
 class EventView:
     """Compute (and cache) event-level physics observables.
@@ -154,22 +159,24 @@ class EventView:
     """
 
     # Quantities that intentionally bypass track quality.
-    _GLOBAL_QUANTITIES: frozenset[str] = frozenset({
-        "energy_imbalance",
-        "e_vis_total",
-        "thrust_vec",
-        "abs_cos_theta_thrust",
-        "thrust_value",
-        "n_lac_clusters",
-        "lac_total_energy",
-        "lac_em_energy",
-        "lac_em_fraction",
-        "n_wic_matches",
-        "wic_total_hits",
-        "wic_min_nlayexp",
-        "wic_max_matchChi2",
-        "event_year",
-    })
+    _GLOBAL_QUANTITIES: frozenset[str] = frozenset(
+        {
+            "energy_imbalance",
+            "e_vis_total",
+            "thrust_vec",
+            "abs_cos_theta_thrust",
+            "thrust_value",
+            "n_lac_clusters",
+            "lac_total_energy",
+            "lac_em_energy",
+            "lac_em_fraction",
+            "n_wic_matches",
+            "wic_total_hits",
+            "wic_min_nlayexp",
+            "wic_max_matchChi2",
+            "event_year",
+        }
+    )
 
     def __init__(
         self,
@@ -202,7 +209,7 @@ class EventView:
         particles: ak.Array,
         *,
         track_quality: TrackQualityCuts | None = None,
-    ) -> "EventView":
+    ) -> EventView:
         """Build an :class:`EventView` configured from a named preset.
 
         Uses only the preset's *track-quality* configuration; the
@@ -223,16 +230,12 @@ class EventView:
         from .selector_presets import PRESETS
 
         if preset not in PRESETS:
-            raise KeyError(
-                f"Unknown preset {preset!r}. Available: {sorted(PRESETS)}"
-            )
+            raise KeyError(f"Unknown preset {preset!r}. Available: {sorted(PRESETS)}")
         _, default_quality = PRESETS[preset]()
         return cls(
             data=data,
             particles=particles,
-            track_quality=(
-                track_quality if track_quality is not None else default_quality
-            ),
+            track_quality=(track_quality if track_quality is not None else default_quality),
         )
 
     # ------------------------------------------------------------------ access
@@ -298,9 +301,7 @@ class EventView:
         if name == "e_vis_total":
             return visible_energy(particles, charged_only=False)
         if name == "max_charged_p":
-            return ak.to_numpy(ak.fill_none(
-                ak.max(charged.p, axis=-1, mask_identity=True), 0.0
-            ))
+            return ak.to_numpy(ak.fill_none(ak.max(charged.p, axis=-1, mask_identity=True), 0.0))
         if name == "charged_mass":
             total = ak.sum(charged, axis=-1)
             return np.asarray(total.mass)
@@ -343,6 +344,7 @@ class EventView:
         # where the bulk of the dataset lies.
         if name == "event_year":
             import pandas as pd
+
             evttime = ak.to_numpy(data.IEVENTH.evttime)
             year = pd.to_datetime(evttime, unit="s").year.values.astype(np.int32)
             return np.where(year == 1970, 1997, year)
@@ -393,9 +395,7 @@ class EventView:
         if name == "lac_total_energy":
             return ak.to_numpy(ak.sum(data.PHKLUS.eraw, axis=-1))
         if name == "lac_em_energy":
-            em_per_cluster = sum(
-                data.PHKLUS.elayer[:, :, i] for i in LAC_EM_LAYERS
-            )
+            em_per_cluster = sum(data.PHKLUS.elayer[:, :, i] for i in LAC_EM_LAYERS)
             return ak.to_numpy(ak.sum(em_per_cluster, axis=-1))
         if name == "lac_em_fraction":
             em = self._get("lac_em_energy")
@@ -409,17 +409,22 @@ class EventView:
         if name == "wic_total_hits":
             return ak.to_numpy(ak.sum(data.PHWIC.nhit, axis=-1))
         if name == "wic_min_nlayexp":
-            return ak.to_numpy(ak.fill_none(
-                ak.min(data.PHWIC.nlayexp, axis=-1, mask_identity=True), 0,
-            ))
+            return ak.to_numpy(
+                ak.fill_none(
+                    ak.min(data.PHWIC.nlayexp, axis=-1, mask_identity=True),
+                    0,
+                )
+            )
         if name == "wic_max_matchChi2":
-            return ak.to_numpy(ak.fill_none(
-                ak.max(data.PHWIC.matchChi2, axis=-1, mask_identity=True), np.inf,
-            ))
+            return ak.to_numpy(
+                ak.fill_none(
+                    ak.max(data.PHWIC.matchChi2, axis=-1, mask_identity=True),
+                    np.inf,
+                )
+            )
 
         raise KeyError(
-            f"Unknown quantity {name!r}. Register it via "
-            f"{type(self).__name__}.register_quantity."
+            f"Unknown quantity {name!r}. Register it via {type(self).__name__}.register_quantity."
         )
 
     def _compute_track_lac_quantities(self) -> None:
@@ -498,9 +503,12 @@ class EventView:
         # ----- Max-LAC over any quality charged track, per hemisphere -----
         def _max_lac(hem_mask: ak.Array) -> np.ndarray:
             lac_sel = ak.where(hem_mask, lac_e, 0.0)
-            return ak.to_numpy(ak.fill_none(
-                ak.max(lac_sel, axis=-1, mask_identity=True), 0.0,
-            ))
+            return ak.to_numpy(
+                ak.fill_none(
+                    ak.max(lac_sel, axis=-1, mask_identity=True),
+                    0.0,
+                )
+            )
 
         max_fwd = _max_lac(in_fwd)
         max_bwd = _max_lac(~in_fwd)

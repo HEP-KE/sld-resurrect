@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Optional, Union
 
 import torch
 
 from sld_resurrect.models.checkpoints import CHECKPOINT_FILES
 from sld_resurrect.paths import OMNILEARN_CHECKPOINT_DIR
-
 
 __all__ = [
     "SIZE_ALIASES",
@@ -31,14 +28,13 @@ def _resolve_size(size: str) -> str:
     if size in SIZE_ALIASES:
         return SIZE_ALIASES[size]
     raise ValueError(
-        f"Unknown size {size!r}. "
-        f"Expected one of {list(SIZE_ALIASES)} or {list(CHECKPOINT_FILES)}."
+        f"Unknown size {size!r}. Expected one of {list(SIZE_ALIASES)} or {list(CHECKPOINT_FILES)}."
     )
 
 
 def checkpoint_path_for(
     size: str,
-    checkpoint_dir: Union[str, Path] = OMNILEARN_CHECKPOINT_DIR,
+    checkpoint_dir: str | Path = OMNILEARN_CHECKPOINT_DIR,
 ) -> Path:
     """Return the checkpoint file path for a given model size.
 
@@ -56,8 +52,8 @@ def checkpoint_path_for(
 
 def load_omnilearned_model(
     size: str,
-    checkpoint_path: Optional[Union[str, Path]] = None,
-    device: Optional[Union[str, torch.device]] = None,
+    checkpoint_path: str | Path | None = None,
+    device: str | torch.device | None = None,
     *,
     input_dim: int = 4,
     num_classes: int = 210,
@@ -115,9 +111,7 @@ def load_omnilearned_model(
     if "body" in checkpoint:
         base_model.body.load_state_dict(checkpoint["body"], strict=False)
     if "classifier_head" in checkpoint:
-        base_model.classifier.load_state_dict(
-            checkpoint["classifier_head"], strict=False
-        )
+        base_model.classifier.load_state_dict(checkpoint["classifier_head"], strict=False)
 
     base_model.eval()
     return base_model

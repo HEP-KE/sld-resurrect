@@ -35,19 +35,18 @@ from .strategies import (
     prepare_superjet,
 )
 
-
 __all__ = [
+    "DEFAULT_BATCH_SIZE",
+    "DEFAULT_MAX_PARTICLES",
+    # Strategy primitives
+    "Strategy",
     # Per-dataset parsers
     "parse_aleph",
     "parse_h1",
     "parse_jetclass1",
     "parse_sld_dataset",
-    "save_strategy_outputs",
-    # Strategy primitives
-    "Strategy",
-    "DEFAULT_MAX_PARTICLES",
-    "DEFAULT_BATCH_SIZE",
-    "prepare_superjet",
-    "prepare_hemisphere",
     "prepare_boosted_frame",
+    "prepare_hemisphere",
+    "prepare_superjet",
+    "save_strategy_outputs",
 ]

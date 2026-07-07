@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import cast
 
 from sld_resurrect.paths import OMNILEARN_CHECKPOINT_DIR
-
 
 __all__ = ["add_parser", "run"]
 
@@ -37,19 +37,22 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
     parser.add_argument("input", type=Path, help="Input HDF5 file (point cloud or embedding).")
     parser.add_argument("output", type=Path, help="Output HDF5 file.")
     parser.add_argument(
-        "--size", "-s",
+        "--size",
+        "-s",
         choices=_SIZE_CHOICES,
         default="s",
         help="Model size: 's' (small), 'm' (medium), 'l' (large). Default: 's'.",
     )
     parser.add_argument(
-        "--batch-size", "-b",
+        "--batch-size",
+        "-b",
         type=int,
         default=128,
         help="Batch size per GPU (default: 128).",
     )
     parser.add_argument(
-        "--max-events", "-n",
+        "--max-events",
+        "-n",
         type=int,
         default=10_000,
         help=(
@@ -59,7 +62,8 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
         ),
     )
     parser.add_argument(
-        "--task", "-t",
+        "--task",
+        "-t",
         choices=("embed", "classify"),
         default="embed",
         help=(
@@ -69,7 +73,8 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
         ),
     )
     parser.add_argument(
-        "--distributed", "-d",
+        "--distributed",
+        "-d",
         action="store_true",
         help=(
             "Run inference across multiple GPUs. Requires invocation under "
@@ -106,7 +111,7 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
 
 
 def run(args: argparse.Namespace) -> int:
-    from sld_resurrect.models.inference import (  # noqa: PLC0415
+    from sld_resurrect.models.inference import (
         cleanup_distributed,
         setup_distributed,
     )
@@ -123,23 +128,23 @@ def run(args: argparse.Namespace) -> int:
 
 def _log(message: str) -> None:
     """Print only on the main (rank-0) process."""
-    from sld_resurrect.models.inference import is_main_process  # noqa: PLC0415
+    from sld_resurrect.models.inference import is_main_process
 
     if is_main_process():
         print(message)
 
 
 def _run_inference(args: argparse.Namespace) -> int:
-    import h5py  # noqa: PLC0415
-    import numpy as np  # noqa: PLC0415
-    import torch  # noqa: PLC0415
+    import h5py
+    import numpy as np
+    import torch
 
-    from sld_resurrect.models.inference import (  # noqa: PLC0415
+    from sld_resurrect.models.inference import (
         batched_inference,
         batched_inference_distributed,
         release_memory,
     )
-    from sld_resurrect.models.loader import (  # noqa: PLC0415
+    from sld_resurrect.models.loader import (
         checkpoint_path_for,
         load_omnilearned_model,
     )
@@ -155,23 +160,24 @@ def _run_inference(args: argparse.Namespace) -> int:
     _log(f"Checkpoint:     {checkpoint_path}")
 
     if args.output.exists() and not args.overwrite:
-        _log(f"Output already exists -- skipping (pass --overwrite to re-run).")
+        _log("Output already exists -- skipping (pass --overwrite to re-run).")
         return 0
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     # ---- Load input ----
     with h5py.File(args.input, "r") as f:
-        if args.max_events > 0:
-            array = f["data"][: args.max_events]
-        else:
-            array = f["data"][:]
+        array = f["data"][: args.max_events] if args.max_events > 0 else f["data"][:]
     data = torch.from_numpy(np.asarray(array)).float()
     _log(f"Loaded input:   shape={tuple(data.shape)}")
 
     # ---- Load model ----
     model = load_omnilearned_model(args.size, checkpoint_path)
-    submodel = model.body if args.task == "embed" else model.classifier
+    # nn.Module attribute access types as Tensor | Module; both heads are modules.
+    submodel = cast(
+        "torch.nn.Module",
+        model.body if args.task == "embed" else model.classifier,
+    )
 
     # ---- Run inference ----
     if args.distributed:
