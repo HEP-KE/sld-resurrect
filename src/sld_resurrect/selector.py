@@ -1,10 +1,11 @@
 """Event-level selection on top of :class:`EventView`.
 
-This module owns the *selection* layer of the analysis: declarative
-:class:`CutSpec` / :class:`CutGroup` dataclasses for individual cuts and
-:class:`EventSelector`, a specialisation of
-:class:`sld_resurrect.event_view.EventView` that evaluates a
-selection (list of cuts/groups) against the cached observables.
+This module owns :class:`EventSelector`, a specialisation of
+:class:`sld_resurrect.event_view.EventView` that evaluates a selection
+(a list of :class:`~sld_resurrect.cuts.CutSpec` /
+:class:`~sld_resurrect.cuts.CutGroup` elements) against the cached
+observables. The cut vocabulary itself lives in
+:mod:`sld_resurrect.cuts` and is re-exported here for convenience.
 
 Charged-particle observables are still computed from the
 quality-selected charged tracks defined by ``track_quality``, so a
@@ -14,92 +15,21 @@ all see exactly the same set of tracks.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Literal, cast
-
 import awkward as ak
 import numpy as np
 
+from .cuts import CompareOp as CompareOp
+from .cuts import CutGroup, CutSpec, Selection
 from .event_view import EventView
 from .track_quality import TrackQualityCuts
 
-# ---------------------------------------------------------------------------
-# Cut specifications and groups
-# ---------------------------------------------------------------------------
-
-CompareOp = Literal["<", "<=", ">", ">=", "==", "!=", "between"]
-
-
-@dataclass(frozen=True)
-class CutSpec:
-    """Declarative description of a single event-level cut.
-
-    Parameters
-    ----------
-    name : str
-        Short identifier used in cutflow tables and log messages.
-    quantity : str
-        Key of the quantity computed by :class:`EventView`. Either a
-        built-in or a custom quantity registered via
-        :meth:`EventView.register_quantity`.
-    op : CompareOp
-        Comparison to apply against ``threshold``. ``"between"`` takes a
-        ``(lo, hi)`` tuple (inclusive on both ends).
-    threshold : float | int | tuple
-        Right-hand side of the comparison.
-    description : str
-        Free-form human-readable description (printed in cutflow tables).
-    """
-
-    name: str
-    quantity: str
-    op: CompareOp
-    threshold: object
-    description: str = ""
-
-    def apply(self, values: np.ndarray) -> np.ndarray:
-        threshold = self.threshold
-        if self.op == "<":
-            return values < threshold
-        if self.op == "<=":
-            return values <= threshold
-        if self.op == ">":
-            return values > threshold
-        if self.op == ">=":
-            return values >= threshold
-        if self.op == "==":
-            return values == threshold
-        if self.op == "!=":
-            return values != threshold
-        if self.op == "between":
-            lo, hi = cast("tuple[float, float]", threshold)
-            return (values >= lo) & (values <= hi)
-        raise ValueError(f"Unknown comparison operator: {self.op!r}")
-
-
-@dataclass(frozen=True)
-class CutGroup:
-    """Collection of cuts combined with a common logical operator.
-
-    Parameters
-    ----------
-    name : str
-        Identifier used in cutflow tables.
-    members : list of CutSpec or CutGroup
-        The cuts (possibly nested groups) to combine.
-    combine : {"and", "or"}
-        How to combine the member results. Defaults to ``"or"``.
-    description : str
-        Human-readable description.
-    """
-
-    name: str
-    members: list  # list[CutSpec | CutGroup]
-    combine: Literal["and", "or"] = "or"
-    description: str = ""
-
-
-Selection = list  # list[CutSpec | CutGroup]
+__all__ = [
+    "CompareOp",
+    "CutGroup",
+    "CutSpec",
+    "EventSelector",
+    "Selection",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -168,13 +98,11 @@ class EventSelector(EventView):
             If ``preset`` is not in
             :data:`sld_resurrect.selector_presets.PRESETS`.
         """
-        # Imported lazily here to avoid the
-        # ``selector_presets -> selector -> event_view`` import cycle.
-        from .selector_presets import PRESETS
+        # Imported here so this module stays import-independent of the
+        # preset catalogue.
+        from .selector_presets import get_preset
 
-        if preset not in PRESETS:
-            raise KeyError(f"Unknown preset {preset!r}. Available: {sorted(PRESETS)}")
-        cuts, default_quality = PRESETS[preset]()
+        cuts, default_quality = get_preset(preset)
         return cls(
             data=data,
             particles=particles,

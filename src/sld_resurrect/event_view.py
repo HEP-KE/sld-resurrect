@@ -58,6 +58,65 @@ LAC_EM_LAYERS: tuple[int, ...] = (0, 1)
 LAC_HAD_LAYERS: tuple[int, ...] = (2, 3, 4, 5, 6, 7)
 """``PHKLUS.elayer`` indices belonging to the HAD section of the LAC."""
 
+POLARISATION_VALIDITY_THRESHOLD: float = 0.1
+"""Minimum ``|PHBM.pol|`` for a usable polarimeter measurement.
+
+Entries at or below this magnitude are placeholder values written when
+no polarimeter reading was associated with the event.
+"""
+
+
+# ---------------------------------------------------------------------------
+# Event-level metadata from the raw banks
+# ---------------------------------------------------------------------------
+
+
+def event_year(data: ak.Array) -> np.ndarray:
+    """Calendar year of each event, from the ``IEVENTH`` timestamps.
+
+    A handful of events carry ``evttime == 0`` (the Unix epoch); those
+    are remapped to 1997, where the bulk of the affected sample lies.
+
+    Parameters
+    ----------
+    data : ak.Array
+        Full event record containing the ``IEVENTH`` bank.
+
+    Returns
+    -------
+    np.ndarray of int32, shape (n_events,)
+    """
+    import pandas as pd
+
+    evttime = ak.to_numpy(data.IEVENTH.evttime)
+    year = pd.to_datetime(evttime, unit="s").year.values.astype(np.int32)
+    return np.where(year == 1970, 1997, year)
+
+
+def beam_polarisation(data: ak.Array) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Per-event electron-beam polarisation, uncertainty, and validity.
+
+    Parameters
+    ----------
+    data : ak.Array
+        Full event record containing the ``PHBM`` bank.
+
+    Returns
+    -------
+    pol : np.ndarray, shape (n_events,)
+        Signed per-event polarisation (negative = left-handed beam).
+    dpol : np.ndarray, shape (n_events,)
+        Polarimeter uncertainty per event.
+    valid : np.ndarray of bool, shape (n_events,)
+        ``|pol| > POLARISATION_VALIDITY_THRESHOLD``; events failing this
+        carry placeholder polarimeter values and must be excluded from
+        polarised observables.
+    """
+    pol = ak.to_numpy(ak.fill_none(ak.pad_none(data.PHBM.pol, target=1, axis=1), value=0.0)[:, 0])
+    dpol = ak.to_numpy(ak.fill_none(ak.pad_none(data.PHBM.dpol, target=1, axis=1), value=0.0)[:, 0])
+    valid = np.abs(pol) > POLARISATION_VALIDITY_THRESHOLD
+    return pol, dpol, valid
+
 
 # ---------------------------------------------------------------------------
 # Cluster-energy lookup helpers (used by the LAC-per-track quantities)
@@ -154,6 +213,11 @@ class EventView:
 
         ea = EventView(data, particles, track_quality=tq)
         cos_theta = ea.get('thrust_vec_charged')[:, 2]
+
+    Or with the track-quality model of a published preset (the same one
+    the corresponding selection would use) via :meth:`from_preset`::
+
+        ea = EventView.from_preset('leptonic_ee', data, particles)
     """
 
     def __init__(
@@ -177,6 +241,47 @@ class EventView:
             data=self._data,
         )
         self._quality_charged: ak.Array = self._particles[self._quality_mask]
+
+    # ------------------------------------------------------------------ factories
+    @classmethod
+    def from_preset(
+        cls,
+        preset: str,
+        data: ak.Array,
+        particles: ak.Array,
+        *,
+        track_quality: TrackQualityCuts | None = None,
+    ) -> EventView:
+        """Build an observables-only view configured from a named preset.
+
+        Uses the preset's *track-quality* configuration; the preset's
+        event-level cut list is not applied. Use
+        :meth:`sld_resurrect.selector.EventSelector.from_preset` when
+        the cuts are wanted too.
+
+        Parameters
+        ----------
+        preset : str
+            Preset name (key of
+            :data:`sld_resurrect.selector_presets.PRESETS`).
+        data, particles, track_quality
+            Same as :meth:`__init__`.
+
+        Raises
+        ------
+        KeyError
+            If ``preset`` is not a registered preset.
+        """
+        # Imported here so the observable layer stays import-independent
+        # of the preset catalogue.
+        from .selector_presets import get_preset
+
+        _, default_quality = get_preset(preset)
+        return cls(
+            data=data,
+            particles=particles,
+            track_quality=(track_quality if track_quality is not None else default_quality),
+        )
 
     # ------------------------------------------------------------------ access
     @property
@@ -279,15 +384,8 @@ class EventView:
             return self._cache[name]
 
         # ----- year of data taking, derived from IEVENTH.evttime ------------
-        # The Unix-epoch zero (evttime == 0) shows up for a handful of
-        # events in the 1996-97 sample; treat those as 1997 since that is
-        # where the bulk of the dataset lies.
         if name == "event_year":
-            import pandas as pd
-
-            evttime = ak.to_numpy(data.IEVENTH.evttime)
-            year = pd.to_datetime(evttime, unit="s").year.values.astype(np.int32)
-            return np.where(year == 1970, 1997, year)
+            return event_year(data)
 
         # ----- thrust-axis hemisphere quantities ----------------------------
         if name in (

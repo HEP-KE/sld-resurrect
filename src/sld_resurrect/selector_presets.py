@@ -2,7 +2,8 @@
 
 Each ``preset_*`` function returns a ``(Selection, TrackQualityCuts)`` pair
 that reproduces the cuts used in one published SLD paper. Presets are
-registered in :data:`PRESETS` and instantiated through the classmethods
+registered in :data:`PRESETS` and resolved by name through
+:func:`get_preset`, which backs the classmethods
 :meth:`sld_resurrect.event_view.EventView.from_preset` (observables only)
 and :meth:`sld_resurrect.selector.EventSelector.from_preset` (observables
 plus the preset's cut list).
@@ -40,8 +41,17 @@ from collections.abc import Callable
 
 import numpy as np
 
-from .selector import CutGroup, CutSpec, Selection
+from .cuts import CutGroup, CutSpec, Selection
 from .track_quality import COS_30_DEG, TrackQualityCuts
+
+LEPTONIC_FIDUCIAL_BY_YEAR: dict[int, float] = {1996: 0.80, 1997: 0.90, 1998: 0.90}
+"""Year-dependent ``|cos(theta_T)|`` fiducial of the 2001 leptonic preselection.
+
+The 1996 run used the pre-upgrade central tracker (fiducial 0.8); the
+1997-98 runs share the upgraded acceptance (0.9). The leptonic presets
+build their fiducial cuts from this table, and the measurement layer
+derives its geometric acceptance correction from the same values.
+"""
 
 # ---------------------------------------------------------------------------
 # Hadronic presets
@@ -214,7 +224,7 @@ def _leptonic_preselection_2001() -> Selection:
                             "cos_lt_08",
                             "abs_cos_theta_thrust_charged",
                             "<",
-                            0.80,
+                            LEPTONIC_FIDUCIAL_BY_YEAR[1996],
                             "|cos(theta_T_charged)| < 0.8",
                         ),
                     ],
@@ -235,7 +245,7 @@ def _leptonic_preselection_2001() -> Selection:
                             "cos_lt_09",
                             "abs_cos_theta_thrust_charged",
                             "<",
-                            0.90,
+                            LEPTONIC_FIDUCIAL_BY_YEAR[1997],
                             "|cos(theta_T_charged)| < 0.9",
                         ),
                     ],
@@ -468,3 +478,30 @@ PRESETS: dict[str, PresetFactory] = {
     "leptonic_1997_mumu": preset_leptonic_1997_mumu,
     "leptonic_1997_tautau": preset_leptonic_1997_tautau,
 }
+
+
+def get_preset(name: str) -> tuple[Selection, TrackQualityCuts]:
+    """Look up a preset by name and build its cut list and track quality.
+
+    The single home for preset resolution: the ``from_preset``
+    classmethods on :class:`~sld_resurrect.event_view.EventView` and
+    :class:`~sld_resurrect.selector.EventSelector` both delegate here.
+
+    Parameters
+    ----------
+    name : str
+        Preset name (key of :data:`PRESETS`).
+
+    Returns
+    -------
+    (Selection, TrackQualityCuts)
+        Freshly-built cut list and the preset's track-quality model.
+
+    Raises
+    ------
+    KeyError
+        If ``name`` is not a registered preset.
+    """
+    if name not in PRESETS:
+        raise KeyError(f"Unknown preset {name!r}. Available: {sorted(PRESETS)}")
+    return PRESETS[name]()

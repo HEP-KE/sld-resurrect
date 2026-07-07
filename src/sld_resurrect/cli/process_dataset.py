@@ -284,16 +284,12 @@ def _run_sld(args: argparse.Namespace) -> int:
     import glob
 
     import awkward as ak
-    import fastjet
     import jazelle
-
-    # The swig-level JetDefinition is needed because fastjet's public
-    # wrapper requires an R parameter, which ee_kt does not take.
-    from fastjet._swig import JetDefinition
     from tqdm.auto import tqdm
 
     from sld_resurrect.datasets import save_strategy_outputs
     from sld_resurrect.datasets.sld import DEFAULT_SHARD_PATTERN, SLD_REQUIRED_BANKS
+    from sld_resurrect.jets import cluster_two_jets
     from sld_resurrect.kinematics import build_particles
     from sld_resurrect.selector import EventSelector
 
@@ -334,12 +330,7 @@ def _run_sld(args: argparse.Namespace) -> int:
     constituents = None
     if "hemisphere" in args.strategies:
         print("Clustering into 2 exclusive Durham jets...")
-        jet_def = JetDefinition(fastjet.ee_kt_algorithm)
-        cluster_seq = fastjet.ClusterSequence(particles, jet_def)
-        constituents = cluster_seq.exclusive_jets_constituents(2)
-        jets = ak.sum(constituents, axis=2)
-        pt_order = ak.argsort(jets.pt, axis=1, ascending=False)
-        constituents = constituents[pt_order]
+        _, constituents = cluster_two_jets(particles)
 
     # ---- Run + save the requested strategies ----
     written = save_strategy_outputs(
