@@ -149,11 +149,11 @@ def _resolve_gpu(device: str, *, verbose: bool = False) -> bool:
     return True
 
 
-def _stage(message: str, pbar: tqdm | None) -> None:
-    """Update a tqdm bar's postfix, or write to stdout if no bar."""
+def _stage(message: str, pbar: tqdm | None, *, verbose: bool = False) -> None:
+    """Update a tqdm bar's postfix; without a bar, print only when verbose."""
     if pbar is not None:
         pbar.set_postfix(stage=message)
-    else:
+    elif verbose:
         tqdm.write(message)
 
 
@@ -164,6 +164,7 @@ def _preprocess_embedding(
     pca_components: int | None = 50,
     use_gpu: bool = False,
     pbar: tqdm | None = None,
+    verbose: bool = False,
 ) -> np.ndarray:
     """Optionally apply standard scaling and PCA to an embedding.
 
@@ -177,6 +178,8 @@ def _preprocess_embedding(
     use_gpu : bool
         Use cuML implementations (must be installed).
     pbar : tqdm or None
+    verbose : bool
+        Without a progress bar, print stage messages only when true.
     """
     if use_gpu:
         from cuml.decomposition import PCA as _PCA
@@ -186,7 +189,7 @@ def _preprocess_embedding(
         from sklearn.preprocessing import StandardScaler as _StandardScaler
 
     if scale:
-        _stage("scaling embeddings", pbar)
+        _stage("scaling embeddings", pbar, verbose=verbose)
         embedding = _StandardScaler().fit_transform(embedding)
 
     if pca_components is not None:
@@ -195,11 +198,13 @@ def _preprocess_embedding(
                 f"skipping PCA: pca_components ({pca_components}) "
                 f">= n_features ({embedding.shape[1]})",
                 pbar,
+                verbose=verbose,
             )
         else:
             _stage(
                 f"applying PCA: {embedding.shape[1]} -> {pca_components} dims",
                 pbar,
+                verbose=verbose,
             )
             embedding = _PCA(n_components=pca_components).fit_transform(embedding)
 
@@ -254,20 +259,21 @@ def get_tsne_embedding(
     """
     use_gpu = _resolve_gpu(device, verbose=verbose)
 
-    _stage("preprocessing", pbar)
+    _stage("preprocessing", pbar, verbose=verbose)
     embedding = _preprocess_embedding(
         embedding,
         scale=scale,
         pca_components=pca_components,
         use_gpu=use_gpu,
         pbar=pbar,
+        verbose=verbose,
     )
 
     if use_gpu:
         from cuml.manifold import TSNE as cumlTSNE
 
         n_neighbors = max(kwargs.pop("n_neighbors", 0), 3 * perplexity)
-        _stage("fitting t-SNE (GPU)", pbar)
+        _stage("fitting t-SNE (GPU)", pbar, verbose=verbose)
         result = cumlTSNE(
             perplexity=perplexity,
             metric=metric,
@@ -279,7 +285,7 @@ def get_tsne_embedding(
     else:
         from openTSNE import TSNE as openTSNE
 
-        _stage("fitting t-SNE (CPU)", pbar)
+        _stage("fitting t-SNE (CPU)", pbar, verbose=verbose)
         result = openTSNE(
             perplexity=perplexity,
             metric=metric,
@@ -287,7 +293,7 @@ def get_tsne_embedding(
             **kwargs,
         ).fit(embedding)
 
-    _stage("done", pbar)
+    _stage("done", pbar, verbose=verbose)
     return np.asarray(result)
 
 
@@ -326,19 +332,20 @@ def get_umap_embedding(
     """
     use_gpu = _resolve_gpu(device, verbose=verbose)
 
-    _stage("preprocessing", pbar)
+    _stage("preprocessing", pbar, verbose=verbose)
     embedding = _preprocess_embedding(
         embedding,
         scale=scale,
         pca_components=pca_components,
         use_gpu=use_gpu,
         pbar=pbar,
+        verbose=verbose,
     )
 
     if use_gpu:
         from cuml.manifold import UMAP as cumlUMAP
 
-        _stage("fitting UMAP (GPU)", pbar)
+        _stage("fitting UMAP (GPU)", pbar, verbose=verbose)
         result = cumlUMAP(
             n_neighbors=n_neighbors,
             metric=metric,
@@ -349,7 +356,7 @@ def get_umap_embedding(
     else:
         from umap import UMAP
 
-        _stage("fitting UMAP (CPU)", pbar)
+        _stage("fitting UMAP (CPU)", pbar, verbose=verbose)
         result = UMAP(
             n_neighbors=n_neighbors,
             metric=metric,
@@ -358,5 +365,5 @@ def get_umap_embedding(
             **kwargs,
         ).fit_transform(embedding)
 
-    _stage("done", pbar)
+    _stage("done", pbar, verbose=verbose)
     return np.asarray(result)
