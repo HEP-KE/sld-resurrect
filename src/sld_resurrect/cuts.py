@@ -16,15 +16,21 @@ from typing import Literal, cast
 
 import numpy as np
 
-__all__ = ["CompareOp", "CutGroup", "CutSpec", "Selection"]
+__all__ = ["CompareOp", "CutGroup", "CutSpec", "Selection", "Threshold"]
 
 
 CompareOp = Literal["<", "<=", ">", ">=", "==", "!=", "between"]
 
+Threshold = float | int | tuple[float, float]
+"""Right-hand side of a cut: a scalar, or a ``(lo, hi)`` pair for ``"between"``."""
 
-@dataclass(frozen=True)
+
+@dataclass(frozen=True, kw_only=True)
 class CutSpec:
     """Declarative description of a single event-level cut.
+
+    All fields are keyword-only: three of them are strings, so a
+    positional call could silently swap ``name`` and ``quantity``.
 
     Parameters
     ----------
@@ -37,7 +43,7 @@ class CutSpec:
     op : CompareOp
         Comparison to apply against ``threshold``. ``"between"`` takes a
         ``(lo, hi)`` tuple (inclusive on both ends).
-    threshold : float | int | tuple
+    threshold : Threshold
         Right-hand side of the comparison.
     description : str
         Free-form human-readable description (printed in cutflow tables).
@@ -46,7 +52,7 @@ class CutSpec:
     name: str
     quantity: str
     op: CompareOp
-    threshold: object
+    threshold: Threshold
     description: str = ""
 
     def apply(self, values: np.ndarray) -> np.ndarray:
@@ -69,7 +75,7 @@ class CutSpec:
         raise ValueError(f"Unknown comparison operator: {self.op!r}")
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class CutGroup:
     """Collection of cuts combined with a common logical operator.
 
@@ -86,9 +92,10 @@ class CutGroup:
     """
 
     name: str
-    members: list  # list[CutSpec | CutGroup]
+    members: list[CutSpec | CutGroup]
     combine: Literal["and", "or"] = "or"
     description: str = ""
 
 
-Selection = list  # list[CutSpec | CutGroup]
+Selection = list[CutSpec | CutGroup]
+"""A selection: the top-level cut elements, combined with AND."""

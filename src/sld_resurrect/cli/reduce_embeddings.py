@@ -73,8 +73,12 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
     parser.add_argument(
         "--method",
         choices=("tsne", "umap"),
-        required=True,
-        help="Dimensionality reduction method.",
+        help="Dimensionality reduction method. Required unless --list is given.",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Recompute even if the output file already exists.",
     )
     parser.add_argument(
         "--size",
@@ -197,9 +201,17 @@ def run(args: argparse.Namespace) -> int:
             print("  (none)")
         return 0
 
+    if args.method is None:
+        raise SystemExit("error: --method is required unless --list is given")
+
     datasets = _resolve_datasets(args)
     pca_components: int | None = args.pca_components if args.pca_components > 0 else None
     output_path = args.output_dir / f"reduced_{args.method}_{args.size}.h5"
+    if output_path.exists() and not args.overwrite:
+        print(
+            f"Output already exists -- skipping (pass --overwrite to recompute).\n  {output_path}"
+        )
+        return 0
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Method:        {args.method}")

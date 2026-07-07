@@ -75,20 +75,44 @@ def preset_alr_1994() -> tuple[Selection, TrackQualityCuts]:
                     description=">=9 LAC in barrel",
                     members=[
                         CutSpec(
-                            "cos_t_le_08",
-                            "abs_cos_theta_thrust",
-                            "<=",
-                            0.8,
-                            "|cos(theta_T)| <= 0.8",
+                            name="cos_t_le_08",
+                            quantity="abs_cos_theta_thrust",
+                            op="<=",
+                            threshold=0.8,
+                            description="|cos(theta_T)| <= 0.8",
                         ),
-                        CutSpec("n_lac_ge_9", "n_lac_clusters", ">=", 9, ">=9 LAC clusters"),
+                        CutSpec(
+                            name="n_lac_ge_9",
+                            quantity="n_lac_clusters",
+                            op=">=",
+                            threshold=9,
+                            description=">=9 LAC clusters",
+                        ),
                     ],
                 ),
-                CutSpec("n_lac_ge_12", "n_lac_clusters", ">=", 12, ">=12 LAC clusters (endcap)"),
+                CutSpec(
+                    name="n_lac_ge_12",
+                    quantity="n_lac_clusters",
+                    op=">=",
+                    threshold=12,
+                    description=">=12 LAC clusters (endcap)",
+                ),
             ],
         ),
-        CutSpec("e_lac_ge_22", "lac_total_energy", ">=", 22.0, "Total LAC energy [GeV]"),
-        CutSpec("eimb_lt_06", "energy_imbalance", "<", 0.6, "Normalised energy imbalance"),
+        CutSpec(
+            name="e_lac_ge_22",
+            quantity="lac_total_energy",
+            op=">=",
+            threshold=22.0,
+            description="Total LAC energy [GeV]",
+        ),
+        CutSpec(
+            name="eimb_lt_06",
+            quantity="energy_imbalance",
+            op="<",
+            threshold=0.6,
+            description="Normalised energy imbalance",
+        ),
     ]
     return cuts, TrackQualityCuts(name="alr_1994_no_track_cuts")
 
@@ -120,20 +144,52 @@ def preset_alr_2000() -> tuple[Selection, TrackQualityCuts]:
                     combine="and",
                     description=">=2 quality tracks per beam hemisphere",
                     members=[
-                        CutSpec("n_fwd_ge_2", "n_charged_beam_fwd", ">=", 2, ">=2 fwd (quality)"),
-                        CutSpec("n_bwd_ge_2", "n_charged_beam_bwd", ">=", 2, ">=2 bwd (quality)"),
+                        CutSpec(
+                            name="n_fwd_ge_2",
+                            quantity="n_charged_beam_fwd",
+                            op=">=",
+                            threshold=2,
+                            description=">=2 fwd (quality)",
+                        ),
+                        CutSpec(
+                            name="n_bwd_ge_2",
+                            quantity="n_charged_beam_bwd",
+                            op=">=",
+                            threshold=2,
+                            description=">=2 bwd (quality)",
+                        ),
                     ],
                 ),
                 CutSpec(
-                    "n_fwd_ge_4", "n_charged_beam_fwd", ">=", 4, ">=4 quality tracks in fwd hem"
+                    name="n_fwd_ge_4",
+                    quantity="n_charged_beam_fwd",
+                    op=">=",
+                    threshold=4,
+                    description=">=4 quality tracks in fwd hem",
                 ),
                 CutSpec(
-                    "n_bwd_ge_4", "n_charged_beam_bwd", ">=", 4, ">=4 quality tracks in bwd hem"
+                    name="n_bwd_ge_4",
+                    quantity="n_charged_beam_bwd",
+                    op=">=",
+                    threshold=4,
+                    description=">=4 quality tracks in bwd hem",
                 ),
             ],
         ),
-        CutSpec("e_lac_ge_22", "lac_total_energy", ">=", 22.0, "Total LAC energy [GeV]"),
-        CutSpec("eimb_lt_06", "energy_imbalance", "<", 0.6, "Normalised energy imbalance"),
+        CutSpec(
+            name="e_lac_ge_22",
+            quantity="lac_total_energy",
+            op=">=",
+            threshold=22.0,
+            description="Total LAC energy [GeV]",
+        ),
+        CutSpec(
+            name="eimb_lt_06",
+            quantity="energy_imbalance",
+            op="<",
+            threshold=0.6,
+            description="Normalised energy imbalance",
+        ),
     ]
     return cuts, quality
 
@@ -152,9 +208,27 @@ def preset_alphas_1995() -> tuple[Selection, TrackQualityCuts]:
         name="alphas_1995_quality",
     )
     cuts: Selection = [
-        CutSpec("nch_ge_5", "n_charged", ">=", 5, ">=5 quality charged tracks"),
-        CutSpec("evis_ge_20", "e_vis_charged", ">=", 20.0, "Quality-track visible energy [GeV]"),
-        CutSpec("cos_theta_lt_071", "abs_cos_theta_thrust", "<", 0.71, "|cos(theta_thrust)|"),
+        CutSpec(
+            name="nch_ge_5",
+            quantity="n_charged",
+            op=">=",
+            threshold=5,
+            description=">=5 quality charged tracks",
+        ),
+        CutSpec(
+            name="evis_ge_20",
+            quantity="e_vis_charged",
+            op=">=",
+            threshold=20.0,
+            description="Quality-track visible energy [GeV]",
+        ),
+        CutSpec(
+            name="cos_theta_lt_071",
+            quantity="abs_cos_theta_thrust",
+            op="<",
+            threshold=0.71,
+            description="|cos(theta_thrust)|",
+        ),
     ]
     return cuts, quality
 
@@ -162,9 +236,27 @@ def preset_alphas_1995() -> tuple[Selection, TrackQualityCuts]:
 def preset_rb_1998() -> tuple[Selection, TrackQualityCuts]:
     r"""1998 :math:`R_b` vertex-mass tag selection (hep-ex/9708015)."""
     cuts: Selection = [
-        CutSpec("nch_ge_7", "n_charged", ">=", 7, "Number of charged particles"),
-        CutSpec("evis_ge_18", "e_vis_charged", ">=", 18.0, "Visible charged energy [GeV]"),
-        CutSpec("cos_theta_lt_071", "abs_cos_theta_thrust", "<", 0.71, "|cos(theta_thrust)|"),
+        CutSpec(
+            name="nch_ge_7",
+            quantity="n_charged",
+            op=">=",
+            threshold=7,
+            description="Number of charged particles",
+        ),
+        CutSpec(
+            name="evis_ge_18",
+            quantity="e_vis_charged",
+            op=">=",
+            threshold=18.0,
+            description="Visible charged energy [GeV]",
+        ),
+        CutSpec(
+            name="cos_theta_lt_071",
+            quantity="abs_cos_theta_thrust",
+            op="<",
+            threshold=0.71,
+            description="|cos(theta_thrust)|",
+        ),
     ]
     return cuts, TrackQualityCuts(name="rb_1998_no_track_cuts")
 
@@ -172,10 +264,30 @@ def preset_rb_1998() -> tuple[Selection, TrackQualityCuts]:
 def preset_abc_2005() -> tuple[Selection, TrackQualityCuts]:
     r"""2005 :math:`A_b` / :math:`A_c` vertex+kaon selection (hep-ex/0410042)."""
     cuts: Selection = [
-        CutSpec("nch_ge_7", "n_charged", ">=", 7, "Number of charged particles"),
-        CutSpec("evis_ge_18", "e_vis_charged", ">=", 18.0, "Visible charged energy [GeV]"),
-        CutSpec("cos_theta_lt_070", "abs_cos_theta_thrust", "<", 0.70, "|cos(theta_thrust)|"),
-        CutSpec("T_gt_08", "thrust_value", ">", 0.80, "Thrust T"),
+        CutSpec(
+            name="nch_ge_7",
+            quantity="n_charged",
+            op=">=",
+            threshold=7,
+            description="Number of charged particles",
+        ),
+        CutSpec(
+            name="evis_ge_18",
+            quantity="e_vis_charged",
+            op=">=",
+            threshold=18.0,
+            description="Visible charged energy [GeV]",
+        ),
+        CutSpec(
+            name="cos_theta_lt_070",
+            quantity="abs_cos_theta_thrust",
+            op="<",
+            threshold=0.70,
+            description="|cos(theta_thrust)|",
+        ),
+        CutSpec(
+            name="T_gt_08", quantity="thrust_value", op=">", threshold=0.80, description="Thrust T"
+        ),
     ]
     return cuts, TrackQualityCuts(name="abc_2005_no_track_cuts")
 
@@ -200,14 +312,18 @@ def _leptonic_preselection_2001() -> Selection:
     year-dependent thrust fiducial."""
     return [
         CutSpec(
-            "nch_between",
-            "n_charged",
-            "between",
-            (2, 8),
-            "2 <= n_charged (quality, IP <= 1 cm) <= 8",
+            name="nch_between",
+            quantity="n_charged",
+            op="between",
+            threshold=(2, 8),
+            description="2 <= n_charged (quality, IP <= 1 cm) <= 8",
         ),
         CutSpec(
-            "hem_q_pm1", "hem_charges_opposite_unit", "==", 1, "Thrust-hem net charges = {+1, -1}"
+            name="hem_q_pm1",
+            quantity="hem_charges_opposite_unit",
+            op="==",
+            threshold=1,
+            description="Thrust-hem net charges = {+1, -1}",
         ),
         CutGroup(
             name="fiducial_by_year",
@@ -219,13 +335,19 @@ def _leptonic_preselection_2001() -> Selection:
                     combine="and",
                     description="1996: |cos(theta_T)| < 0.8",
                     members=[
-                        CutSpec("is_1996", "event_year", "==", 1996, "year == 1996"),
                         CutSpec(
-                            "cos_lt_08",
-                            "abs_cos_theta_thrust_charged",
-                            "<",
-                            LEPTONIC_FIDUCIAL_BY_YEAR[1996],
-                            "|cos(theta_T_charged)| < 0.8",
+                            name="is_1996",
+                            quantity="event_year",
+                            op="==",
+                            threshold=1996,
+                            description="year == 1996",
+                        ),
+                        CutSpec(
+                            name="cos_lt_08",
+                            quantity="abs_cos_theta_thrust_charged",
+                            op="<",
+                            threshold=LEPTONIC_FIDUCIAL_BY_YEAR[1996],
+                            description="|cos(theta_T_charged)| < 0.8",
                         ),
                     ],
                 ),
@@ -235,18 +357,18 @@ def _leptonic_preselection_2001() -> Selection:
                     description="1997-98: |cos(theta_T)| < 0.9",
                     members=[
                         CutSpec(
-                            "is_1997_98",
-                            "event_year",
-                            "between",
-                            (1997, 1998),
-                            "1997 <= year <= 1998",
+                            name="is_1997_98",
+                            quantity="event_year",
+                            op="between",
+                            threshold=(1997, 1998),
+                            description="1997 <= year <= 1998",
                         ),
                         CutSpec(
-                            "cos_lt_09",
-                            "abs_cos_theta_thrust_charged",
-                            "<",
-                            LEPTONIC_FIDUCIAL_BY_YEAR[1997],
-                            "|cos(theta_T_charged)| < 0.9",
+                            name="cos_lt_09",
+                            quantity="abs_cos_theta_thrust_charged",
+                            op="<",
+                            threshold=LEPTONIC_FIDUCIAL_BY_YEAR[1997],
+                            description="|cos(theta_T_charged)| < 0.9",
                         ),
                     ],
                 ),
@@ -265,11 +387,11 @@ def preset_leptonic_ee() -> tuple[Selection, TrackQualityCuts]:
     cuts = [
         *_leptonic_preselection_2001(),
         CutSpec(
-            "hem_lac_sum_gt_45",
-            "hem_top_track_lac_sum",
-            ">",
-            45.0,
-            "Sum of per-hem leading-track LAC [GeV]",
+            name="hem_lac_sum_gt_45",
+            quantity="hem_top_track_lac_sum",
+            op=">",
+            threshold=45.0,
+            description="Sum of per-hem leading-track LAC [GeV]",
         ),
     ]
     return cuts, LEPTONIC_QUALITY_2001
@@ -279,13 +401,19 @@ def preset_leptonic_mumu() -> tuple[Selection, TrackQualityCuts]:
     r"""2001 :math:`Z \to \mu^+ \mu^-` selection (hep-ex/0010015)."""
     cuts = [
         *_leptonic_preselection_2001(),
-        CutSpec("mass_gt_70", "charged_mass", ">", 70.0, "Charged-track invariant mass [GeV]"),
         CutSpec(
-            "hem_lac_lt_14",
-            "hem_top_track_lac_max",
-            "<",
-            14.0,
-            "Max hem leading-track LAC energy [GeV]",
+            name="mass_gt_70",
+            quantity="charged_mass",
+            op=">",
+            threshold=70.0,
+            description="Charged-track invariant mass [GeV]",
+        ),
+        CutSpec(
+            name="hem_lac_lt_14",
+            quantity="hem_top_track_lac_max",
+            op="<",
+            threshold=14.0,
+            description="Max hem leading-track LAC energy [GeV]",
         ),
     ]
     return cuts, LEPTONIC_QUALITY_2001
@@ -295,7 +423,13 @@ def preset_leptonic_tautau() -> tuple[Selection, TrackQualityCuts]:
     r"""2001 :math:`Z \to \tau^+ \tau^-` selection (hep-ex/0010015)."""
     cuts = [
         *_leptonic_preselection_2001(),
-        CutSpec("mass_lt_70", "charged_mass", "<", 70.0, "Charged-track invariant mass [GeV]"),
+        CutSpec(
+            name="mass_lt_70",
+            quantity="charged_mass",
+            op="<",
+            threshold=70.0,
+            description="Charged-track invariant mass [GeV]",
+        ),
         CutGroup(
             name="ee_veto_lac",
             combine="or",
@@ -307,14 +441,18 @@ def preset_leptonic_tautau() -> tuple[Selection, TrackQualityCuts]:
                     description="central: LAC < 39 GeV",
                     members=[
                         CutSpec(
-                            "cos_lt_07", "abs_cos_theta_thrust", "<", 0.7, "|cos(theta_T)| < 0.7"
+                            name="cos_lt_07",
+                            quantity="abs_cos_theta_thrust",
+                            op="<",
+                            threshold=0.7,
+                            description="|cos(theta_T)| < 0.7",
                         ),
                         CutSpec(
-                            "lac_lt_39",
-                            "hem_charged_track_lac_max",
-                            "<",
-                            39.0,
-                            "Max per-hem charged-track LAC < 39 GeV",
+                            name="lac_lt_39",
+                            quantity="hem_charged_track_lac_max",
+                            op="<",
+                            threshold=39.0,
+                            description="Max per-hem charged-track LAC < 39 GeV",
                         ),
                     ],
                 ),
@@ -324,33 +462,43 @@ def preset_leptonic_tautau() -> tuple[Selection, TrackQualityCuts]:
                     description="forward: LAC < 33 GeV",
                     members=[
                         CutSpec(
-                            "cos_ge_07", "abs_cos_theta_thrust", ">=", 0.7, "|cos(theta_T)| >= 0.7"
+                            name="cos_ge_07",
+                            quantity="abs_cos_theta_thrust",
+                            op=">=",
+                            threshold=0.7,
+                            description="|cos(theta_T)| >= 0.7",
                         ),
                         CutSpec(
-                            "lac_lt_33",
-                            "hem_charged_track_lac_max",
-                            "<",
-                            33.0,
-                            "Max per-hem charged-track LAC < 33 GeV",
+                            name="lac_lt_33",
+                            quantity="hem_charged_track_lac_max",
+                            op="<",
+                            threshold=33.0,
+                            description="Max per-hem charged-track LAC < 33 GeV",
                         ),
                     ],
                 ),
             ],
         ),
         CutSpec(
-            "hem_angle_gt_160",
-            "hem_opening_angle",
-            ">",
-            float(np.deg2rad(160.0)),
-            "Hemisphere opening angle > 160 deg",
+            name="hem_angle_gt_160",
+            quantity="hem_opening_angle",
+            op=">",
+            threshold=float(np.deg2rad(160.0)),
+            description="Hemisphere opening angle > 160 deg",
         ),
-        CutSpec("max_p_gt_4", "max_charged_p", ">", 4.0, "Highest-p charged track > 4 GeV"),
         CutSpec(
-            "hem_mass_lt_16",
-            "hem_invariant_mass_max",
-            "<",
-            1.6,
-            "Max thrust-hem invariant mass < 1.6 GeV",
+            name="max_p_gt_4",
+            quantity="max_charged_p",
+            op=">",
+            threshold=4.0,
+            description="Highest-p charged track > 4 GeV",
+        ),
+        CutSpec(
+            name="hem_mass_lt_16",
+            quantity="hem_invariant_mass_max",
+            op="<",
+            threshold=1.6,
+            description="Max thrust-hem invariant mass < 1.6 GeV",
         ),
     ]
     return cuts, LEPTONIC_QUALITY_2001
@@ -365,16 +513,26 @@ def _leptonic_preselection_1997() -> Selection:
     """1997 common preselection: tighter |cos| < 0.7, no year split."""
     return [
         CutSpec(
-            "nch_between",
-            "n_charged",
-            "between",
-            (2, 8),
-            "2 <= n_charged (quality, IP <= 1 cm) <= 8",
+            name="nch_between",
+            quantity="n_charged",
+            op="between",
+            threshold=(2, 8),
+            description="2 <= n_charged (quality, IP <= 1 cm) <= 8",
         ),
         CutSpec(
-            "hem_q_pm1", "hem_charges_opposite_unit", "==", 1, "Thrust-hem net charges = {+1, -1}"
+            name="hem_q_pm1",
+            quantity="hem_charges_opposite_unit",
+            op="==",
+            threshold=1,
+            description="Thrust-hem net charges = {+1, -1}",
         ),
-        CutSpec("cos_theta_lt_070", "abs_cos_theta_thrust", "<", 0.70, "|cos(theta_thrust)|"),
+        CutSpec(
+            name="cos_theta_lt_070",
+            quantity="abs_cos_theta_thrust",
+            op="<",
+            threshold=0.70,
+            description="|cos(theta_thrust)|",
+        ),
     ]
 
 
@@ -383,11 +541,11 @@ def preset_leptonic_1997_ee() -> tuple[Selection, TrackQualityCuts]:
     cuts = [
         *_leptonic_preselection_1997(),
         CutSpec(
-            "hem_lac_sum_gt_45",
-            "hem_top_track_lac_sum",
-            ">",
-            45.0,
-            "Sum of per-hem leading-track LAC [GeV]",
+            name="hem_lac_sum_gt_45",
+            quantity="hem_top_track_lac_sum",
+            op=">",
+            threshold=45.0,
+            description="Sum of per-hem leading-track LAC [GeV]",
         ),
     ]
     return cuts, LEPTONIC_QUALITY_1997
@@ -397,20 +555,26 @@ def preset_leptonic_1997_mumu() -> tuple[Selection, TrackQualityCuts]:
     r"""1997 :math:`Z \to \mu^+ \mu^-` (hep-ex/9704012)."""
     cuts = [
         *_leptonic_preselection_1997(),
-        CutSpec("mass_gt_70", "charged_mass", ">", 70.0, "Charged-track invariant mass [GeV]"),
         CutSpec(
-            "hem_lac_lt_10",
-            "hem_top_track_lac_max",
-            "<",
-            10.0,
-            "Max hem leading-track LAC energy [GeV]",
+            name="mass_gt_70",
+            quantity="charged_mass",
+            op=">",
+            threshold=70.0,
+            description="Charged-track invariant mass [GeV]",
         ),
         CutSpec(
-            "hem_lac_gt_0",
-            "hem_top_track_lac_min",
-            ">",
-            0.0,
-            "Min hem leading-track LAC energy [GeV]",
+            name="hem_lac_lt_10",
+            quantity="hem_top_track_lac_max",
+            op="<",
+            threshold=10.0,
+            description="Max hem leading-track LAC energy [GeV]",
+        ),
+        CutSpec(
+            name="hem_lac_gt_0",
+            quantity="hem_top_track_lac_min",
+            op=">",
+            threshold=0.0,
+            description="Min hem leading-track LAC energy [GeV]",
         ),
     ]
     return cuts, LEPTONIC_QUALITY_1997
@@ -420,35 +584,47 @@ def preset_leptonic_1997_tautau() -> tuple[Selection, TrackQualityCuts]:
     r"""1997 :math:`Z \to \tau^+ \tau^-` (hep-ex/9704012)."""
     cuts = [
         *_leptonic_preselection_1997(),
-        CutSpec("mass_lt_70", "charged_mass", "<", 70.0, "Charged-track invariant mass [GeV]"),
         CutSpec(
-            "hem_lac_lt_275",
-            "hem_top_track_lac_max",
-            "<",
-            27.5,
-            "Max hem leading-track LAC energy [GeV]",
+            name="mass_lt_70",
+            quantity="charged_mass",
+            op="<",
+            threshold=70.0,
+            description="Charged-track invariant mass [GeV]",
         ),
         CutSpec(
-            "hem_lac_gt_0",
-            "hem_top_track_lac_min",
-            ">",
-            0.0,
-            "Min hem leading-track LAC energy [GeV]",
+            name="hem_lac_lt_275",
+            quantity="hem_top_track_lac_max",
+            op="<",
+            threshold=27.5,
+            description="Max hem leading-track LAC energy [GeV]",
         ),
         CutSpec(
-            "hem_angle_gt_160",
-            "hem_opening_angle",
-            ">",
-            float(np.deg2rad(160.0)),
-            "Opening angle of hem momentum sums > 160 deg",
+            name="hem_lac_gt_0",
+            quantity="hem_top_track_lac_min",
+            op=">",
+            threshold=0.0,
+            description="Min hem leading-track LAC energy [GeV]",
         ),
-        CutSpec("max_p_gt_3", "max_charged_p", ">", 3.0, "Highest-p charged track [GeV]"),
         CutSpec(
-            "hem_mass_lt_18",
-            "hem_invariant_mass_max",
-            "<",
-            1.8,
-            "Max thrust-hem invariant mass [GeV]",
+            name="hem_angle_gt_160",
+            quantity="hem_opening_angle",
+            op=">",
+            threshold=float(np.deg2rad(160.0)),
+            description="Opening angle of hem momentum sums > 160 deg",
+        ),
+        CutSpec(
+            name="max_p_gt_3",
+            quantity="max_charged_p",
+            op=">",
+            threshold=3.0,
+            description="Highest-p charged track [GeV]",
+        ),
+        CutSpec(
+            name="hem_mass_lt_18",
+            quantity="hem_invariant_mass_max",
+            op="<",
+            threshold=1.8,
+            description="Max thrust-hem invariant mass [GeV]",
         ),
     ]
     return cuts, LEPTONIC_QUALITY_1997

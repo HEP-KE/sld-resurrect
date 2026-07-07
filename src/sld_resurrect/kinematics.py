@@ -43,6 +43,9 @@ E_CM: float = 91.18
 M_PION: float = 0.13957
 """Charged-pion mass [GeV/c^2], the standard SLD track mass hypothesis."""
 
+INV_PT_FLOOR: float = 1e-12
+"""Floor for ``|1/pt|`` in :func:`build_tracks`, guarding division by zero."""
+
 
 # ---------------------------------------------------------------------------
 # Particle 4-momentum construction
@@ -145,9 +148,10 @@ def build_tracks(data: ak.Array) -> ak.Array:
     ref_y = hlxpar[..., 4]
     ref_z = hlxpar[..., 5]
 
-    # Magnitude of pt from |1/pt|, with a safety guard for the
-    # (unphysical) inv_pt == 0 case.
-    pt = 1.0 / ak.where(inv_pt != 0, abs(inv_pt), 1e-12)
+    # Magnitude of pt from |1/pt|. The floor guards the (unphysical)
+    # inv_pt == 0 case; an affected track comes out with the sentinel
+    # pt = 1/INV_PT_FLOOR = 1e12 GeV rather than crashing the build.
+    pt = 1.0 / ak.where(inv_pt != 0, abs(inv_pt), INV_PT_FLOOR)
 
     cartesian = ak.zip(
         {
@@ -476,16 +480,27 @@ def _thrust_major_minor_kernel(
 
         nx, ny, nz = tx[i], ty[i], tz[i]
 
+        # The transverse projections w.r.t. the thrust axis do not depend
+        # on the candidate axis; compute them once per event instead of
+        # inside the O(n^2) candidate scan.
+        rx_all = np.empty(n, dtype=np.float64)
+        ry_all = np.empty(n, dtype=np.float64)
+        rz_all = np.empty(n, dtype=np.float64)
+        for m in range(n):
+            dot_m = px_i[m] * nx + py_i[m] * ny + pz_i[m] * nz
+            rx_all[m] = px_i[m] - dot_m * nx
+            ry_all[m] = py_i[m] - dot_m * ny
+            rz_all[m] = pz_i[m] - dot_m * nz
+
         best_maj = 0.0
         best_mx = 0.0
         best_my = 0.0
         best_mz = 0.0
 
         for k in range(n):
-            dot_k = px_i[k] * nx + py_i[k] * ny + pz_i[k] * nz
-            qx = px_i[k] - dot_k * nx
-            qy = py_i[k] - dot_k * ny
-            qz = pz_i[k] - dot_k * nz
+            qx = rx_all[k]
+            qy = ry_all[k]
+            qz = rz_all[k]
             qmag = np.sqrt(qx * qx + qy * qy + qz * qz)
             if qmag <= 0.0:
                 continue
@@ -496,11 +511,7 @@ def _thrust_major_minor_kernel(
 
             s = 0.0
             for m in range(n):
-                dot_m = px_i[m] * nx + py_i[m] * ny + pz_i[m] * nz
-                rx = px_i[m] - dot_m * nx
-                ry = py_i[m] - dot_m * ny
-                rz = pz_i[m] - dot_m * nz
-                s += abs(rx * mx + ry * my + rz * mz)
+                s += abs(rx_all[m] * mx + ry_all[m] * my + rz_all[m] * mz)
 
             if s > best_maj:
                 best_maj = s
