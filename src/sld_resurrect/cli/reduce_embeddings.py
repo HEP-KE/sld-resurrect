@@ -9,15 +9,12 @@ dataset's own key in a single combined output HDF5 file.
 from __future__ import annotations
 
 import argparse
-import re
 from pathlib import Path
 
+from sld_resurrect.models.checkpoints import MODEL_SIZES
 from sld_resurrect.paths import OMNILEARN_EMBEDDING_DIR, OMNILEARN_REDUCED_DIR
 
 __all__ = ["add_parser", "run"]
-
-
-_FILENAME_RE = re.compile(r"^omnilearned_embedding_(?P<size>[sml])_(?P<dataset>.+)\.h5$")
 
 
 def _max_events(value: str) -> int | None:
@@ -38,14 +35,18 @@ def _max_events(value: str) -> int | None:
 def _discover_datasets(embedding_dir: Path, size: str) -> list[str]:
     """Return the sorted list of dataset names available for ``size``.
 
-    A "dataset name" is the trailing portion of the filename
-    ``omnilearned_embedding_{size}_{name}.h5``.
+    A "dataset name" is the trailing portion of the file-name convention
+    :data:`sld_resurrect.reduction.EMBEDDING_FILENAME_FORMAT`.
     """
+    from sld_resurrect.reduction import EMBEDDING_FILENAME_FORMAT, parse_embedding_filename
+
     names: list[str] = []
-    for path in sorted(embedding_dir.glob(f"omnilearned_embedding_{size}_*.h5")):
-        match = _FILENAME_RE.match(path.name)
-        if match and match["size"] == size:
-            names.append(match["dataset"])
+    for path in sorted(
+        embedding_dir.glob(EMBEDDING_FILENAME_FORMAT.format(size=size, dataset="*"))
+    ):
+        parsed = parse_embedding_filename(path.name)
+        if parsed is not None and parsed[0] == size:
+            names.append(parsed[1])
     return names
 
 
@@ -78,7 +79,7 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
     parser.add_argument(
         "--size",
         "-s",
-        choices=("s", "m", "l"),
+        choices=MODEL_SIZES,
         default="m",
         help="OmniLearned model size whose embeddings to load (default: m).",
     )
@@ -153,11 +154,13 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
 
 def _resolve_datasets(args: argparse.Namespace) -> list[str]:
     """Resolve the list of datasets to process, validating user input."""
+    from sld_resurrect.reduction import EMBEDDING_FILENAME_FORMAT
+
     available = _discover_datasets(args.embedding_dir, args.size)
     if not available:
+        pattern = EMBEDDING_FILENAME_FORMAT.format(size=args.size, dataset="*")
         raise SystemExit(
-            f"No embedding files matching "
-            f"'omnilearned_embedding_{args.size}_*.h5' found under "
+            f"No embedding files matching {pattern!r} found under "
             f"{args.embedding_dir!r}.\n"
             f"Did you run `sld-resurrect inference --task embed -s {args.size}` first?"
         )

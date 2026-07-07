@@ -19,7 +19,7 @@ from sld_resurrect.paths import OMNILEARN_CHECKPOINT_DIR
 __all__ = ["add_parser", "run"]
 
 
-_SIZE_CHOICES = ("s", "m", "l")
+from sld_resurrect.models.checkpoints import MODEL_SIZES as _SIZE_CHOICES
 
 
 def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:

@@ -26,10 +26,18 @@ from sld_resurrect.paths import OMNILEARN_CHECKPOINT_DIR
 __all__ = [
     "CHECKPOINT_FILES",
     "CHECKPOINT_URL_BASE",
+    "MODEL_SIZES",
+    "MODEL_SIZE_ALIASES",
     "checkpoint_url",
     "fetch_checkpoints",
 ]
 
+
+MODEL_SIZE_ALIASES: dict[str, str] = {"s": "small", "m": "medium", "l": "large"}
+"""One-letter to full-name mapping for the published model sizes."""
+
+MODEL_SIZES: tuple[str, ...] = tuple(MODEL_SIZE_ALIASES)
+"""The one-letter model-size vocabulary used across the CLI."""
 
 CHECKPOINT_URL_BASE: str = "https://portal.nersc.gov/cfs/dasrepo/omnilearned/checkpoints/"
 """Public NERSC URL prefix where the OmniLearned ``.pt`` files are hosted."""

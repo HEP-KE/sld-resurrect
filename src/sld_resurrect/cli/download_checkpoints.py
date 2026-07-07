@@ -7,16 +7,14 @@ from pathlib import Path
 
 from sld_resurrect.models.checkpoints import (
     CHECKPOINT_FILES,
+    MODEL_SIZE_ALIASES,
+    MODEL_SIZES,
     checkpoint_url,
     fetch_checkpoints,
 )
 from sld_resurrect.paths import OMNILEARN_CHECKPOINT_DIR
 
 __all__ = ["add_parser", "run"]
-
-
-_SIZE_CHOICES = ("s", "m", "l")
-_SIZE_FULL = {"s": "small", "m": "medium", "l": "large"}
 
 
 def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
@@ -32,8 +30,8 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
     parser.add_argument(
         "--sizes",
         nargs="+",
-        choices=_SIZE_CHOICES,
-        default=list(_SIZE_CHOICES),
+        choices=MODEL_SIZES,
+        default=list(MODEL_SIZES),
         help=(
             "Model sizes to download. Default: all three (s, m, l). "
             "Each size is roughly 100-300 MB."
@@ -60,7 +58,7 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
 
 
 def run(args: argparse.Namespace) -> int:
-    urls = [checkpoint_url(CHECKPOINT_FILES[_SIZE_FULL[s]]) for s in args.sizes]
+    urls = [checkpoint_url(CHECKPOINT_FILES[MODEL_SIZE_ALIASES[s]]) for s in args.sizes]
 
     print(f"Downloading {len(urls)} checkpoint(s) to {args.checkpoint_dir}:")
     for url in urls:

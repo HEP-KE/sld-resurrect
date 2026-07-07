@@ -6,7 +6,7 @@ from pathlib import Path
 
 import torch
 
-from sld_resurrect.models.checkpoints import CHECKPOINT_FILES
+from sld_resurrect.models.checkpoints import CHECKPOINT_FILES, MODEL_SIZE_ALIASES
 from sld_resurrect.paths import OMNILEARN_CHECKPOINT_DIR
 
 __all__ = [
@@ -17,8 +17,8 @@ __all__ = [
 ]
 
 
-SIZE_ALIASES: dict[str, str] = {"s": "small", "m": "medium", "l": "large"}
-"""One-letter to full-name mapping for model sizes."""
+SIZE_ALIASES: dict[str, str] = MODEL_SIZE_ALIASES
+"""Alias of :data:`sld_resurrect.models.checkpoints.MODEL_SIZE_ALIASES`."""
 
 
 def _resolve_size(size: str) -> str:

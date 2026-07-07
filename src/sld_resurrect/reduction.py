@@ -18,6 +18,7 @@ and applies mean pooling over the token axis;
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import h5py
@@ -28,10 +29,12 @@ from sld_resurrect.paths import OMNILEARN_EMBEDDING_DIR
 
 __all__ = [
     "DATASET_KEY",
+    "EMBEDDING_FILENAME_FORMAT",
     "embedding_path_for",
     "get_tsne_embedding",
     "get_umap_embedding",
     "load_pooled_embedding",
+    "parse_embedding_filename",
 ]
 
 
@@ -42,6 +45,12 @@ DATASET_KEY: str = "data"
 # ---------------------------------------------------------------------------
 # I/O helpers
 # ---------------------------------------------------------------------------
+
+
+EMBEDDING_FILENAME_FORMAT: str = "omnilearned_embedding_{size}_{dataset}.h5"
+"""File-name convention for saved OmniLearned embeddings."""
+
+_EMBEDDING_FILENAME_RE = re.compile(r"^omnilearned_embedding_(?P<size>[sml])_(?P<dataset>.+)\.h5$")
 
 
 def embedding_path_for(
@@ -60,7 +69,19 @@ def embedding_path_for(
     base_dir : path-like
         Directory containing the embedding files.
     """
-    return Path(base_dir) / f"omnilearned_embedding_{size}_{dataset}.h5"
+    return Path(base_dir) / EMBEDDING_FILENAME_FORMAT.format(size=size, dataset=dataset)
+
+
+def parse_embedding_filename(name: str) -> tuple[str, str] | None:
+    """Split an embedding file name into ``(size, dataset)``.
+
+    Returns ``None`` when ``name`` does not follow
+    :data:`EMBEDDING_FILENAME_FORMAT`.
+    """
+    match = _EMBEDDING_FILENAME_RE.match(name)
+    if match is None:
+        return None
+    return match["size"], match["dataset"]
 
 
 def load_pooled_embedding(
