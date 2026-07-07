@@ -86,7 +86,7 @@ def _check_disk_space(output_dir: Path, zip_bytes: int) -> None:
     required = int(zip_bytes * 2.1)
     free = shutil.disk_usage(output_dir).free
     if free < required:
-        raise OSError(
+        raise SystemExit(
             f"Not enough free space in {output_dir}: need about "
             f"{required / 1e9:.1f} GB (zip + extracted shards), have "
             f"{free / 1e9:.1f} GB. Free up space or pass --output-dir "
@@ -127,7 +127,7 @@ def _download(url: str, zip_path: Path, total: int | None) -> None:
 
     written = part_path.stat().st_size
     if total is not None and written != total:
-        raise OSError(
+        raise SystemExit(
             f"Incomplete download: got {written:,} of {total:,} bytes. "
             f"Re-run to resume from where it stopped."
         )

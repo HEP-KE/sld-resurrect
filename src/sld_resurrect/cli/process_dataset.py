@@ -297,7 +297,10 @@ def _run_sld(args: argparse.Namespace) -> int:
     pattern = args.pattern if args.pattern is not None else DEFAULT_SHARD_PATTERN
     files = sorted(glob.glob(str(args.input_dir / pattern)))
     if not files:
-        raise FileNotFoundError(f"No files matching {pattern!r} under {args.input_dir!r}")
+        raise SystemExit(
+            f"No parquet shards matching {pattern!r} under {args.input_dir} -- "
+            f"check the input directory and --pattern."
+        )
 
     arrays: list = []
     n_loaded = 0
