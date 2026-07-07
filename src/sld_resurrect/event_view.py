@@ -17,8 +17,10 @@ be used directly without supplying a dummy cut list.
 Charged-particle quantities (``n_charged``, ``charged_mass``,
 ``thrust_vec_charged``, ``hem_*``, ``hem_top_track_lac_*``, ...) are
 computed from the *quality-selected* charged tracks defined by
-``track_quality``. Detector-global quantities listed in
-:attr:`EventView._GLOBAL_QUANTITIES` bypass the quality mask.
+``track_quality``. Detector-global quantities (LAC and WIC totals,
+``energy_imbalance``, ``event_year``, the inclusive thrust family, ...)
+are computed from the unfiltered event record and bypass the quality
+mask.
 """
 
 from __future__ import annotations
@@ -148,36 +150,11 @@ class EventView:
 
     Examples
     --------
-    Build directly with a custom :class:`TrackQualityCuts`::
+    Build with a custom :class:`TrackQualityCuts`::
 
         ea = EventView(data, particles, track_quality=tq)
         cos_theta = ea.get('thrust_vec_charged')[:, 2]
-
-    Or build from a published preset (the same one the selection would
-    have used) with :meth:`from_preset`::
-
-        ea = EventView.from_preset('leptonic_ee', data, particles)
     """
-
-    # Quantities that intentionally bypass track quality.
-    _GLOBAL_QUANTITIES: frozenset[str] = frozenset(
-        {
-            "energy_imbalance",
-            "e_vis_total",
-            "thrust_vec",
-            "abs_cos_theta_thrust",
-            "thrust_value",
-            "n_lac_clusters",
-            "lac_total_energy",
-            "lac_em_energy",
-            "lac_em_fraction",
-            "n_wic_matches",
-            "wic_total_hits",
-            "wic_min_nlayexp",
-            "wic_max_matchChi2",
-            "event_year",
-        }
-    )
 
     def __init__(
         self,
@@ -200,44 +177,6 @@ class EventView:
             data=self._data,
         )
         self._quality_charged: ak.Array = self._particles[self._quality_mask]
-
-    # ------------------------------------------------------------------ factories
-    @classmethod
-    def from_preset(
-        cls,
-        preset: str,
-        data: ak.Array,
-        particles: ak.Array,
-        *,
-        track_quality: TrackQualityCuts | None = None,
-    ) -> EventView:
-        """Build an :class:`EventView` configured from a named preset.
-
-        Uses only the preset's *track-quality* configuration; the
-        preset's event-level cut list is discarded. Use
-        :meth:`sld_resurrect.selector.EventSelector.from_preset` instead
-        if the cut list is also wanted.
-
-        Parameters
-        ----------
-        preset : str
-            Preset name (key of
-            :data:`sld_resurrect.selector_presets.PRESETS`).
-        data, particles, track_quality
-            Same as :meth:`__init__`.
-        """
-        # Imported lazily here to avoid the
-        # ``selector_presets -> selector -> event_view`` import cycle.
-        from .selector_presets import PRESETS
-
-        if preset not in PRESETS:
-            raise KeyError(f"Unknown preset {preset!r}. Available: {sorted(PRESETS)}")
-        _, default_quality = PRESETS[preset]()
-        return cls(
-            data=data,
-            particles=particles,
-            track_quality=(track_quality if track_quality is not None else default_quality),
-        )
 
     # ------------------------------------------------------------------ access
     @property
@@ -289,7 +228,7 @@ class EventView:
     def _compute_builtin(self, name: str) -> np.ndarray:
         # Quality-selected charged tracks are the universal input for all
         # charged-particle-derived quantities. Detector-global quantities
-        # listed in _GLOBAL_QUANTITIES use the unfiltered event record.
+        # (the branches reading `data` below) use the unfiltered record.
         charged = self._quality_charged
         particles = self._particles
         data = self._data
@@ -317,7 +256,7 @@ class EventView:
             # Charged thrust uses the quality-selected charged subset. The
             # axis is sign-resolved by the hemisphere net charges so that
             # cos(theta_T_charged) carries physical meaning (axis points
-            # along the negative-charge fermion direction). Events whose
+            # along the positive-net-charge hemisphere). Events whose
             # hemisphere charges are ambiguous are written with NaN axis
             # components, so any downstream cut on
             # ``hem_charges_opposite_unit == 1`` naturally filters them

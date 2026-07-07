@@ -1,4 +1,4 @@
-"""Run an OmniLearn checkpoint on a point cloud.
+"""Run an OmniLearned checkpoint on a point cloud.
 
 Use ``--task embed`` to extract per-token body embeddings (the default,
 typical first step for visualisation). Use ``--task classify`` to run
@@ -25,9 +25,9 @@ _SIZE_CHOICES = ("s", "m", "l")
 def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser = subparsers.add_parser(
         "inference",
-        help="Run an OmniLearn checkpoint on a point cloud (embed or classify).",
+        help="Run an OmniLearned checkpoint on a point cloud (embed or classify).",
         description=(
-            "Loads an OmniLearn checkpoint and runs inference on a point-cloud "
+            "Loads an OmniLearned checkpoint and runs inference on a point-cloud "
             "HDF5 file. Output is written as HDF5 with a single 'data' dataset. "
             "Use --task embed to extract body embeddings (typical first step), "
             "then re-run with --task classify on the embedding file to get the "
@@ -201,5 +201,6 @@ def _run_inference(args: argparse.Namespace) -> int:
             f.create_dataset("data", data=results.numpy())
         _log(f"Saved {args.output} | shape={tuple(results.shape)}")
 
-    release_memory(model, results)
+    del model, results
+    release_memory()
     return 0

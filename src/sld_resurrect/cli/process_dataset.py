@@ -1,4 +1,4 @@
-"""Convert raw experimental data to OmniLearn-compatible point clouds.
+"""Convert raw experimental data to OmniLearned-compatible point clouds.
 
 One sub-subcommand per experiment (jetclass1, h1, aleph, sld). Outputs
 are HDF5 files of shape ``(n_events, max_particles, 4)`` with a single
@@ -34,7 +34,7 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
         type=int,
         default=128,
         help=(
-            "Padding length per event (default: 128). OmniLearn was "
+            "Padding length per event (default: 128). OmniLearned was "
             "pre-trained at 128 -- changing this only makes sense if "
             "you are also fine-tuning the model."
         ),
@@ -48,7 +48,7 @@ def _add_strategy_args(parser: argparse.ArgumentParser) -> None:
         choices=("superjet", "hemisphere", "boosted_frame"),
         required=True,
         help=(
-            "Coordinate-mapping strategy for OmniLearn input. "
+            "Coordinate-mapping strategy for OmniLearned input. "
             "'superjet': whole event on the thrust axis. "
             "'hemisphere': two Durham jets, each on its own axis. "
             "'boosted_frame': rotate the event so thrust lies along +z."
@@ -88,7 +88,7 @@ def _write_h5(path: Path, array) -> None:
 def _jetclass1_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     p = subparsers.add_parser(
         "jetclass1",
-        help="Convert JetClass1 ROOT files to an OmniLearn point cloud.",
+        help="Convert JetClass1 ROOT files to an OmniLearned point cloud.",
         description=(
             "JetClass1 stores per-jet ROOT files with already-computed "
             "(part_deta, part_dphi) relative to each jet axis, so no "
@@ -122,9 +122,9 @@ def _run_jetclass1(args: argparse.Namespace) -> int:
 def _h1_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     p = subparsers.add_parser(
         "h1",
-        help="Convert H1 DIS HDF5 files to an OmniLearn point cloud.",
+        help="Convert H1 DIS HDF5 files to an OmniLearned point cloud.",
         description=(
-            "H1 .h5 files are already in OmniLearn point-cloud format; "
+            "H1 .h5 files are already in OmniLearned point-cloud format; "
             "this subcommand concatenates files, drops trailing feature "
             "columns, and pads."
         ),
@@ -156,7 +156,7 @@ def _run_h1(args: argparse.Namespace) -> int:
 def _aleph_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     p = subparsers.add_parser(
         "aleph",
-        help="Convert ALEPH ROOT files to an OmniLearn point cloud.",
+        help="Convert ALEPH ROOT files to an OmniLearned point cloud.",
         description=(
             "ALEPH events are processed exactly like SLD: raw particles "
             "are loaded, then dispatched through one of the three "
@@ -211,7 +211,7 @@ def _sld_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentPars
         description=(
             "Reads SLD parquet shards via jazelle, applies the default "
             "hadronic event selection, runs Durham 2-jet clustering on "
-            "the surviving events, and emits OmniLearn input files for "
+            "the surviving events, and emits OmniLearned input files for "
             "the requested strategies. For custom hadronic selections, "
             "use the data-analysis notebook directly."
         ),
@@ -286,7 +286,9 @@ def _run_sld(args: argparse.Namespace) -> int:
     import awkward as ak
     import fastjet
     import jazelle
-    from fastjet._pyjet import AwkwardClusterSequence
+
+    # The swig-level JetDefinition is needed because fastjet's public
+    # wrapper requires an R parameter, which ee_kt does not take.
     from fastjet._swig import JetDefinition
     from tqdm.auto import tqdm
 
@@ -333,7 +335,7 @@ def _run_sld(args: argparse.Namespace) -> int:
     if "hemisphere" in args.strategies:
         print("Clustering into 2 exclusive Durham jets...")
         jet_def = JetDefinition(fastjet.ee_kt_algorithm)
-        cluster_seq = AwkwardClusterSequence(particles, jet_def)
+        cluster_seq = fastjet.ClusterSequence(particles, jet_def)
         constituents = cluster_seq.exclusive_jets_constituents(2)
         jets = ak.sum(constituents, axis=2)
         pt_order = ak.argsort(jets.pt, axis=1, ascending=False)
@@ -363,9 +365,9 @@ def _run_sld(args: argparse.Namespace) -> int:
 def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser = subparsers.add_parser(
         "process-dataset",
-        help="Convert raw experimental data to OmniLearn point clouds.",
+        help="Convert raw experimental data to OmniLearned point clouds.",
         description=(
-            "Converts raw experimental data files into OmniLearn-compatible "
+            "Converts raw experimental data files into OmniLearned-compatible "
             "point clouds (HDF5 with a single 'data' dataset of shape "
             "(n_events, max_particles, 4)). Use one of the four "
             "sub-subcommands to choose the experiment."

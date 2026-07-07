@@ -46,7 +46,7 @@ def parse_sld_dataset(
     max_particles: int = DEFAULT_MAX_PARTICLES,
     batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
-    """Convert SLD events to OmniLearn-compatible point clouds.
+    """Convert SLD events to OmniLearned-compatible point clouds.
 
     Parameters
     ----------
@@ -116,7 +116,7 @@ def save_strategy_outputs(
     -------
     dict[str, str]
         Mapping from a label (e.g. ``"superjet"``,
-        ``"hemisphere_leading"``, ...) to the absolute output filepath.
+        ``"hemisphere_leading"``, ...) to the written output filepath.
     """
 
     os.makedirs(output_dir, exist_ok=True)
@@ -151,7 +151,11 @@ def _write_array(
     stem: str,
     array: np.ndarray,
 ) -> str:
-    """Write ``array`` to ``output_dir/stem.h5`` and return the absolute path."""
+    """Write ``array`` to ``output_dir/stem.h5`` and return the written path.
+
+    The path is built from ``output_dir`` as given, so it is relative
+    whenever ``output_dir`` is relative.
+    """
     import h5py
 
     path = os.path.join(output_dir, f"{stem}.h5")

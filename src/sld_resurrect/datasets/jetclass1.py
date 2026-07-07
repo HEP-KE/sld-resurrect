@@ -33,7 +33,7 @@ def parse_jetclass1(
     max_events: int = -1,
     max_particles: int = 128,
 ) -> np.ndarray:
-    """Parse JetClass1 ROOT files into an OmniLearn point cloud.
+    """Parse JetClass1 ROOT files into an OmniLearned point cloud.
 
     Parameters
     ----------

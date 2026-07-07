@@ -262,7 +262,12 @@ def _thrust_kernel(
     pz: np.ndarray,
     offsets: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Exact thrust by enumeration over single- and pair-particle axes."""
+    """Thrust by enumeration over single-particle and particle-pair-sum axes.
+
+    Exact for back-to-back two-jet topologies; for events whose true
+    thrust axis is not aligned with any particle or pair sum, the
+    enumeration is a tight lower-bound approximation.
+    """
     n_events = len(offsets) - 1
     thrust_vals = np.zeros(n_events, dtype=np.float64)
     thrust_axes = np.zeros((n_events, 3), dtype=np.float64)
@@ -346,11 +351,14 @@ def _thrust_kernel(
 def thrust(
     particles: ak.Array,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Exact thrust value, thrust axis, and signed cos(theta_T) for every event.
+    """Thrust value, thrust axis, and signed cos(theta_T) for every event.
 
-    The thrust axis has an intrinsic two-fold ambiguity (n and -n give the
-    same T), so the sign of cos(theta_T) is only meaningful if a convention
-    is applied externally -- see :func:`orient_thrust_by_charge`.
+    The axis is found by enumerating single-particle and particle-pair-sum
+    candidates -- exact for two-jet topologies, a tight approximation
+    otherwise. The thrust axis has an intrinsic two-fold ambiguity (n and
+    -n give the same T), so the sign of cos(theta_T) is only meaningful if
+    a convention is applied externally -- see
+    :func:`orient_thrust_by_charge`.
 
     Parameters
     ----------
@@ -362,9 +370,9 @@ def thrust(
     Returns
     -------
     T : np.ndarray, shape (n_events,)
-        Exact thrust value in [0.5, 1].
+        Thrust value in [0.5, 1].
     thrust_vec : np.ndarray, shape (n_events, 3)
-        Unit vector along the exact thrust axis.
+        Unit vector along the thrust axis.
     cos_theta_T : np.ndarray, shape (n_events,)
         Signed ``thrust_vec[:, 2]``, in [-1, 1].
     """
@@ -395,12 +403,14 @@ def orient_thrust_by_charge(
 ) -> np.ndarray:
     """Resolve the thrust-axis sign using the hemisphere net charges.
 
-    The exact thrust axis is symmetric under :math:`\\hat n \\to -\\hat n`,
-    so the sign of ``cos(theta_T)`` carries no physical information by
-    default. For leptonic-coupling measurements we want the axis to point
-    along the **negative**-charge fermion direction, which fixes the sign:
-    if the forward hemisphere defined by the candidate axis has net
-    charge ``q_f > 0``, flip the axis.
+    The thrust axis is symmetric under :math:`\\hat n \\to -\\hat n`, so
+    the sign of ``cos(theta_T)`` carries no physical information by
+    default. This function fixes the sign so the axis points along the
+    **positive**-net-charge hemisphere (for dilepton events, along the
+    positively-charged lepton): if the forward hemisphere defined by the
+    candidate axis has net charge ``q_f < 0``, the axis is flipped. The
+    convention is validated end to end by the sign of the extracted
+    leptonic asymmetries, which reproduce the published SLD values.
 
     Events whose hemisphere charges are ambiguous (same-sign or zero) are
     returned with NaN axis components, so downstream cuts naturally drop
@@ -421,9 +431,7 @@ def orient_thrust_by_charge(
         Sign-corrected thrust axes, with ambiguous events set to NaN.
     """
     q_f, q_b = hemisphere_net_charge(charged, thrust_vec)
-    flip = np.where(q_f < 0, 1.0, -1.0)
-    # seems that we actually need an opposite flipping for some reason
-    flip = -flip
+    flip = np.where(q_f < 0, -1.0, 1.0)
     oriented = thrust_vec * flip[:, np.newaxis]
 
     ambiguous = (q_f * q_b >= 0) | (q_f == 0)

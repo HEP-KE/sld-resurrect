@@ -1,4 +1,4 @@
-"""Run t-SNE or UMAP on saved OmniLearn embeddings.
+"""Run t-SNE or UMAP on saved OmniLearned embeddings.
 
 Loads embedding files for one or more datasets, applies mean pooling
 over the token axis, then runs the chosen non-linear reduction down to
@@ -52,7 +52,7 @@ def _discover_datasets(embedding_dir: Path, size: str) -> list[str]:
 def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser = subparsers.add_parser(
         "reduce-embeddings",
-        help="Run t-SNE or UMAP on saved OmniLearn embeddings.",
+        help="Run t-SNE or UMAP on saved OmniLearned embeddings.",
         description=(
             "Loads embedding files for one or more datasets, mean-pools "
             "over the token axis, runs t-SNE or UMAP, and writes the 2D "
@@ -80,7 +80,7 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
         "-s",
         choices=("s", "m", "l"),
         default="m",
-        help="OmniLearn model size whose embeddings to load (default: m).",
+        help="OmniLearned model size whose embeddings to load (default: m).",
     )
     parser.add_argument(
         "--max-events",

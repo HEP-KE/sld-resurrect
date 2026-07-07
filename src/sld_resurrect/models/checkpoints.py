@@ -1,13 +1,13 @@
-"""Download and cache OmniLearn checkpoint files.
+"""Download and cache OmniLearned checkpoint files.
 
-The OmniLearn pretrained weights are published as plain ``.pt`` files
+The OmniLearned pretrained weights are published as plain ``.pt`` files
 on a NERSC HTTP endpoint. :func:`fetch_checkpoints` downloads one or
 more of them in parallel, writing to a target directory and skipping
 files that already exist with the expected size.
 
 The HTTP endpoint and filenames are baked in below. Edit
 :data:`CHECKPOINT_URL_BASE` and :data:`CHECKPOINT_FILES` if the
-OmniLearn project moves them.
+OmniLearned project moves them.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ __all__ = [
 
 
 CHECKPOINT_URL_BASE: str = "https://portal.nersc.gov/cfs/dasrepo/omnilearned/checkpoints/"
-"""Public NERSC URL prefix where the OmniLearn ``.pt`` files are hosted."""
+"""Public NERSC URL prefix where the OmniLearned ``.pt`` files are hosted."""
 
 CHECKPOINT_FILES: dict[str, str] = {
     "small": "best_model_pretrain_s.pt",

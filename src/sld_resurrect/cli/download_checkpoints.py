@@ -1,4 +1,4 @@
-"""Download pretrained OmniLearn checkpoint files."""
+"""Download pretrained OmniLearned checkpoint files."""
 
 from __future__ import annotations
 
@@ -22,9 +22,9 @@ _SIZE_FULL = {"s": "small", "m": "medium", "l": "large"}
 def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser = subparsers.add_parser(
         "download-checkpoints",
-        help="Download pretrained OmniLearn checkpoints.",
+        help="Download pretrained OmniLearned checkpoints.",
         description=(
-            "Download one or more pretrained OmniLearn .pt files from the "
+            "Download one or more pretrained OmniLearned .pt files from the "
             "public NERSC endpoint, with size-based caching (already-present "
             "files matching the remote size are skipped)."
         ),

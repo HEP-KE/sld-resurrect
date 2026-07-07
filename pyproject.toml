@@ -18,7 +18,7 @@ keywords = [
     "SLD",
     "SLAC",
     "Z-pole",
-    "OmniLearn",
+    "OmniLearned",
     "foundation-model",
 ]
 classifiers = [
@@ -34,7 +34,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
-# Core analysis dependencies. The ML / OmniLearn-specific packages are
+# Core analysis dependencies. The ML / OmniLearned-specific packages are
 # split off into the [project.optional-dependencies] groups below so
 # someone running just the data-analysis notebook doesn't have to
 # install PyTorch.
@@ -55,15 +55,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# OmniLearn inference (CPU- or GPU-side). Torch wheels are platform-
+# OmniLearned inference (CPU- or GPU-side). Torch wheels are platform-
 # dependent; we leave version selection to the user's pip extras.
 ml = [
     "torch>=2.0",
     "omnilearned",
 ]
-# Dimensionality reduction. cuML (the GPU path in `reduction.py`) is
-# pulled in via `pip install sld_resurrect[ml-gpu]`, which is a
-# super-set of [ml] plus cuML's RAPIDS index.
+# Dimensionality reduction, CPU stack. The GPU path in `reduction.py`
+# needs cuML, which lives on the RAPIDS index and cannot be expressed
+# as a pip extra -- install it manually (see the README); [ml-gpu]
+# below bundles [ml] plus scikit-learn for such GPU nodes.
 reduce = [
     "scikit-learn>=1.3",
     "openTSNE>=1.0",
