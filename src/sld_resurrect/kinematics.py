@@ -100,6 +100,155 @@ def build_particles(data: ak.Array) -> ak.Array:
     return particles
 
 
+def build_tracks(data: ak.Array) -> ak.Array:
+    """Build Momentum4D 4-vectors from the ``PHCHRG`` (charged track) bank.
+
+    Unlike :func:`build_particles` which uses the inclusive ``PHPSUM``
+    list (the reconstruction's best-effort merging of tracks and
+    clusters into physics-object 4-vectors), this helper rebuilds the
+    track 4-vector *directly* from the raw helix parameters. Useful for
+    track-level analyses where the PHPSUM merging is not appropriate
+    (e.g. impact-parameter studies, vertex-based flavour tagging) or
+    for cross-checking PHPSUM against its underlying detector inputs
+    via the PHPOINT pointer bank.
+
+    The 6-element ``hlxpar`` helix parameter vector is laid out as
+    ``[phi, 1/pt, tan(lambda), x, y, z]``, where ``phi`` is the
+    track-momentum azimuth at the reference point, ``1/pt`` is the
+    signed inverse transverse momentum, ``tan(lambda) = pz / pt`` with
+    ``lambda`` the dip angle, and ``(x, y, z)`` is the helix reference
+    point. We take the magnitude of ``1/pt`` (sign is redundant with
+    the ``charge`` field) and assemble (px, py, pz) cylindrically.
+    Tracks are given the charged-pion mass, consistent with
+    :func:`build_particles`.
+
+    Parameters
+    ----------
+    data : ak.Array
+        Full event record containing at least the ``PHCHRG`` bank.
+
+    Returns
+    -------
+    ak.Array
+        Per-event Momentum4D track list with fields
+        ``pt``, ``eta``, ``phi``, ``e``, ``charge``, ``vx``, ``vy``, ``vz``.
+        The ``v*`` fields are the per-track helix reference point (the
+        "origin" of the helix, typically near the IP or a secondary
+        vertex), analogous to PHPSUM's per-particle origin.
+    """
+    hlxpar = data.PHCHRG.hlxpar
+    phi = hlxpar[..., 0]
+    inv_pt = hlxpar[..., 1]
+    tan_lambda = hlxpar[..., 2]
+    ref_x = hlxpar[..., 3]
+    ref_y = hlxpar[..., 4]
+    ref_z = hlxpar[..., 5]
+
+    # Magnitude of pt from |1/pt|, with a safety guard for the
+    # (unphysical) inv_pt == 0 case.
+    pt = 1.0 / ak.where(inv_pt != 0, abs(inv_pt), 1e-12)
+
+    cartesian = ak.zip(
+        {
+            "px": pt * np.cos(phi),
+            "py": pt * np.sin(phi),
+            "pz": pt * tan_lambda,
+            "m": M_PION,
+        },
+        with_name="Momentum4D",
+    )
+    tracks = ak.zip(
+        {
+            "pt": cartesian.pt,
+            "eta": cartesian.eta,
+            "phi": cartesian.phi,
+            "e": cartesian.e,
+        },
+        with_name="Momentum4D",
+    )
+    tracks["charge"] = data.PHCHRG.charge
+    tracks["vx"] = ref_x
+    tracks["vy"] = ref_y
+    tracks["vz"] = ref_z
+    return tracks
+
+
+def build_clusters(
+    data: ak.Array,
+    *,
+    energy_weighted: bool = True,
+    energy_scale: float = 1.0,
+) -> ak.Array:
+    """Build Momentum4D 4-vectors from the ``PHKLUS`` (calo cluster) bank.
+
+    Calorimeter clusters are treated as massless light-cone modes: the
+    cluster energy is ``eraw`` (optionally rescaled), and the
+    direction is set by the cluster centroid ``(cos theta, phi)``.
+    PHKLUS records both *geometric* (``cth``, ``phi``) and
+    *energy-weighted* (``wcth``, ``wphi``) centroids; the
+    energy-weighted ones are physically more meaningful for a 4-vector
+    and are the default.
+
+    The full-cluster centroid is used. PHKLUS also exposes EM-only
+    (``cth2``/``wcth2``/``phi2``/``wphi2``) and HAD-only
+    (``cth3``/``wcth3``/``phi3``/``wphi3``) subcluster variants; use
+    those directly if you need to build subcluster 4-vectors.
+
+    Parameters
+    ----------
+    data : ak.Array
+        Full event record containing at least the ``PHKLUS`` bank.
+    energy_weighted : bool, default True
+        If True, use the energy-weighted centroid (``wcth``, ``wphi``);
+        otherwise use the geometric centroid (``cth``, ``phi``).
+    energy_scale : float, default 1.0
+        Multiplicative calibration applied to ``eraw``. The default
+        leaves the raw cluster energy unchanged; the caller is
+        responsible for any LAC calibration appropriate to their analysis.
+
+    Returns
+    -------
+    ak.Array
+        Per-event Momentum4D cluster list with fields
+        ``pt``, ``eta``, ``phi``, ``e``.
+    """
+    eraw = data.PHKLUS.eraw * energy_scale
+    cos_theta = data.PHKLUS.wcth if energy_weighted else data.PHKLUS.cth
+    phi = data.PHKLUS.wphi if energy_weighted else data.PHKLUS.phi
+
+    # |p| = E for massless clusters; (px, py, pz) follows from
+    # (E, cos_theta, phi) via pt = E sin(theta). Apply a tiny floor on
+    # sin(theta) so that clusters exactly along the beam axis (cos_theta
+    # = +/- 1) still get a finite pt -- and therefore a finite eta when
+    # the record is converted to cylindrical form. The floor sits many
+    # orders of magnitude below physical cluster pt (~10 MeV minimum)
+    # so it cannot affect downstream physics.
+    _SIN_THETA_FLOOR = 1e-6
+    sin_theta = np.sqrt(np.maximum(0.0, 1.0 - cos_theta**2))
+    sin_theta = ak.where(sin_theta > _SIN_THETA_FLOOR, sin_theta, _SIN_THETA_FLOOR)
+    pt = eraw * sin_theta
+
+    cartesian = ak.zip(
+        {
+            "px": pt * np.cos(phi),
+            "py": pt * np.sin(phi),
+            "pz": eraw * cos_theta,
+            "m": ak.zeros_like(eraw),
+        },
+        with_name="Momentum4D",
+    )
+    clusters = ak.zip(
+        {
+            "pt": cartesian.pt,
+            "eta": cartesian.eta,
+            "phi": cartesian.phi,
+            "e": cartesian.e,
+        },
+        with_name="Momentum4D",
+    )
+    return clusters
+
+
 # ---------------------------------------------------------------------------
 # Thrust
 # ---------------------------------------------------------------------------

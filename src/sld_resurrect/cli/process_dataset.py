@@ -287,7 +287,7 @@ def _run_sld(args: argparse.Namespace) -> int:
 
     from sld_resurrect.datasets import save_strategy_outputs
     from sld_resurrect.kinematics import build_particles
-    from sld_resurrect.selector_presets import make_selector
+    from sld_resurrect.selector import EventSelector
 
     # ---- Load parquet shards (lazy: stop once max_events is reached) ----
     files = sorted(glob.glob(str(args.input_dir / args.pattern)))
@@ -318,7 +318,7 @@ def _run_sld(args: argparse.Namespace) -> int:
 
     # ---- Hadronic selection ----
     particles_all = build_particles(data)
-    selector = make_selector("hadronic_default", data, particles_all)
+    selector = EventSelector.from_preset("hadronic_default", data, particles_all)
     mask = selector.mask()
     n_sel, n_tot = int(mask.sum()), len(data)
     print(f"Hadronic selection: {n_sel:,} / {n_tot:,} events ({100 * n_sel / n_tot:.1f}%)")
