@@ -201,5 +201,6 @@ def _run_inference(args: argparse.Namespace) -> int:
             f.create_dataset("data", data=results.numpy())
         _log(f"Saved {args.output} | shape={tuple(results.shape)}")
 
-    release_memory(model, results)
+    del model, results
+    release_memory()
     return 0

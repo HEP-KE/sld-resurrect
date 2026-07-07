@@ -228,10 +228,12 @@ def batched_inference_distributed(
 # ---------------------------------------------------------------------------
 
 
-def release_memory(*objs: object) -> None:
-    """Free Python references and trigger CUDA cache release."""
-    for obj in objs:
-        del obj
+def release_memory() -> None:
+    """Run garbage collection and release CUDA cached memory.
+
+    Callers should drop their own references (``del``) first so the
+    collected objects are actually reclaimable.
+    """
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
