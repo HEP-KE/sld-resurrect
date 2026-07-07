@@ -96,11 +96,13 @@ def _cluster_two_jets(particles: ak.Array) -> ak.Array:
     # Imported here so the module is importable without fastjet installed
     # for users who only need the superjet/boosted_frame strategies.
     import fastjet
-    from fastjet._pyjet import AwkwardClusterSequence
+
+    # The swig-level JetDefinition is needed because fastjet's public
+    # wrapper requires an R parameter, which ee_kt does not take.
     from fastjet._swig import JetDefinition
 
     jet_def = JetDefinition(fastjet.ee_kt_algorithm)
-    cluster_seq = AwkwardClusterSequence(particles, jet_def)
+    cluster_seq = fastjet.ClusterSequence(particles, jet_def)
     constituents = cluster_seq.exclusive_jets_constituents(2)
     jets = ak.sum(constituents, axis=2)
     pt_order = ak.argsort(jets.pt, axis=1, ascending=False)
