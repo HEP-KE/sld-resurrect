@@ -44,7 +44,7 @@ measurement results are viewable directly on GitHub:
 For SLD, stages 2–5 are also exposed through the `sld-resurrect` CLI
 (the SLD path applies the default hadronic selection before building
 point clouds), plus a visualisation notebook
-[`demos/OmniLearn_Embeddings.ipynb`](demos/OmniLearn_Embeddings.ipynb).
+[`demos/SLD_04_OmniLearnedEmbeddings.ipynb`](demos/SLD_04_OmniLearnedEmbeddings.ipynb).
 
 ---
 
@@ -357,7 +357,7 @@ sld-resurrect reduce-embeddings sld_superjet \
 ```
 
 The reduced output then feeds the visualisation notebook
-[`demos/OmniLearn_Embeddings.ipynb`](demos/OmniLearn_Embeddings.ipynb).
+[`demos/SLD_04_OmniLearnedEmbeddings.ipynb`](demos/SLD_04_OmniLearnedEmbeddings.ipynb).
 
 ---
 
