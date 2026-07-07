@@ -307,7 +307,42 @@ class EventView:
         self._cache.pop(name, None)
 
     def get(self, name: str) -> np.ndarray:
-        """Public accessor for a (possibly cached) derived quantity."""
+        """Return a per-event derived quantity, computing and caching it on demand.
+
+        Parameters
+        ----------
+        name : str
+            A custom quantity registered via :meth:`register_quantity`,
+            or one of the built-ins:
+
+            * charged-particle: ``n_charged``, ``e_vis_charged``,
+              ``max_charged_p``, ``charged_mass``
+            * thrust: ``thrust_value``, ``thrust_vec``,
+              ``abs_cos_theta_thrust``, ``thrust_vec_charged``,
+              ``abs_cos_theta_thrust_charged``
+            * beam-hemisphere: ``n_charged_beam_fwd``,
+              ``n_charged_beam_bwd``
+            * thrust-hemisphere: ``hem_net_charge_fwd``,
+              ``hem_net_charge_bwd``, ``hem_charges_opposite_unit``,
+              ``hem_opening_angle``, ``hem_invariant_mass_max``,
+              ``hem_invariant_mass_min``, ``hem_top_track_lac_max``,
+              ``hem_top_track_lac_min``, ``hem_top_track_lac_sum``
+            * detector-global: ``e_vis_total``, ``energy_imbalance``,
+              ``event_year``, ``n_lac_clusters``, ``lac_total_energy``,
+              ``lac_em_energy``, ``lac_em_fraction``, ``n_wic_matches``,
+              ``wic_total_hits``, ``wic_min_nlayexp``,
+              ``wic_max_matchChi2``
+
+        Returns
+        -------
+        np.ndarray, shape (n_events,) or (n_events, 3)
+            Per-event values (3-vectors for the ``thrust_vec*`` keys).
+
+        Raises
+        ------
+        KeyError
+            If ``name`` is neither a built-in nor a registered quantity.
+        """
         return self._get(name)
 
     def __repr__(self) -> str:

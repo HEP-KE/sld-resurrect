@@ -43,6 +43,9 @@ E_CM: float = 91.18
 M_PION: float = 0.13957
 """Charged-pion mass [GeV/c^2], the standard SLD track mass hypothesis."""
 
+INV_PT_FLOOR: float = 1e-12
+"""Floor for ``|1/pt|`` in :func:`build_tracks`, guarding division by zero."""
+
 
 # ---------------------------------------------------------------------------
 # Particle 4-momentum construction
@@ -145,9 +148,10 @@ def build_tracks(data: ak.Array) -> ak.Array:
     ref_y = hlxpar[..., 4]
     ref_z = hlxpar[..., 5]
 
-    # Magnitude of pt from |1/pt|, with a safety guard for the
-    # (unphysical) inv_pt == 0 case.
-    pt = 1.0 / ak.where(inv_pt != 0, abs(inv_pt), 1e-12)
+    # Magnitude of pt from |1/pt|. The floor guards the (unphysical)
+    # inv_pt == 0 case; an affected track comes out with the sentinel
+    # pt = 1/INV_PT_FLOOR = 1e12 GeV rather than crashing the build.
+    pt = 1.0 / ak.where(inv_pt != 0, abs(inv_pt), INV_PT_FLOOR)
 
     cartesian = ak.zip(
         {
