@@ -17,7 +17,26 @@ from sld_resurrect.datasets.strategies import (
     prepare_superjet,
 )
 
-__all__ = ["parse_sld_dataset", "save_strategy_outputs"]
+__all__ = [
+    "DEFAULT_SHARD_PATTERN",
+    "SLD_REQUIRED_BANKS",
+    "parse_sld_dataset",
+    "save_strategy_outputs",
+]
+
+
+SLD_REQUIRED_BANKS: tuple[str, ...] = (
+    "IEVENTH",  # event header: run, event, trigger, timestamp
+    "PHBM",  # beam info: ecm, per-event polarisation, IP position
+    "PHPSUM",  # inclusive reconstructed particles
+    "PHKLUS",  # calorimeter clusters (LAC)
+    "PHPOINT",  # PHPSUM -> (track, cluster) pointer bank
+    "PHWIC",  # muon iron-calorimeter info
+)
+"""Mini-DST bank families the SLD selection/point-cloud pipeline reads."""
+
+DEFAULT_SHARD_PATTERN: str = "*nrec*.parquet"
+"""Glob pattern matching the released mini-DST parquet shards."""
 
 
 def parse_sld_dataset(
@@ -76,6 +95,7 @@ def save_strategy_outputs(
     strategies: Iterable[Strategy] = ("superjet", "hemisphere", "boosted_frame"),
     max_particles: int = DEFAULT_MAX_PARTICLES,
     name_prefix: str = "omnilearned_input_sld",
+    batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> dict[str, str]:
     """Run each requested strategy and save the resulting arrays.
 
@@ -89,6 +109,8 @@ def save_strategy_outputs(
         Strategies to run, in order.
     max_particles : int
     name_prefix : str
+    batch_size : int
+        Batch size for the ``boosted_frame`` strategy.
 
     Returns
     -------
@@ -106,6 +128,7 @@ def save_strategy_outputs(
             particles=particles,
             strategy=strategy,
             max_particles=max_particles,
+            batch_size=batch_size,
         )
         if strategy == "hemisphere":
             cloud_leading, cloud_subleading = result

@@ -108,10 +108,29 @@ def load_omnilearned_model(
     base_model.to(device)
 
     checkpoint = torch.load(checkpoint_path, map_location=device)
-    if "body" in checkpoint:
-        base_model.body.load_state_dict(checkpoint["body"], strict=False)
-    if "classifier_head" in checkpoint:
-        base_model.classifier.load_state_dict(checkpoint["classifier_head"], strict=False)
+    missing = [key for key in ("body", "classifier_head") if key not in checkpoint]
+    if missing:
+        raise KeyError(
+            f"Checkpoint {checkpoint_path} is missing expected key(s) {missing}; "
+            f"found {sorted(checkpoint)}. Not an OmniLearn PET2 pretraining checkpoint?"
+        )
+
+    # The published checkpoints carry training-time extras (diffusion
+    # conditioning, time embeddings) that the inference-time PET2 does not
+    # instantiate, so unexpected keys are tolerated. Missing keys would
+    # leave layers randomly initialised and are always an error.
+    for part_name, module, state in (
+        ("body", base_model.body, checkpoint["body"]),
+        ("classifier_head", base_model.classifier, checkpoint["classifier_head"]),
+    ):
+        result = module.load_state_dict(state, strict=False)
+        if result.missing_keys:
+            raise RuntimeError(
+                f"Checkpoint {checkpoint_path} {part_name!r} lacks "
+                f"{len(result.missing_keys)} parameter(s) "
+                f"(e.g. {result.missing_keys[:3]}); refusing to run with "
+                f"randomly-initialised layers."
+            )
 
     base_model.eval()
     return base_model

@@ -243,8 +243,11 @@ def _sld_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentPars
     )
     p.add_argument(
         "--pattern",
-        default="*.parquet",
-        help="Pattern to match parquet shards in input_dir (default: '*.parquet').",
+        default=None,
+        help=(
+            "Pattern to match parquet shards in input_dir. Defaults to "
+            "the released-shard pattern '*nrec*.parquet'."
+        ),
     )
     p.add_argument(
         "--max-events",
@@ -288,28 +291,21 @@ def _run_sld(args: argparse.Namespace) -> int:
     from tqdm.auto import tqdm
 
     from sld_resurrect.datasets import save_strategy_outputs
+    from sld_resurrect.datasets.sld import DEFAULT_SHARD_PATTERN, SLD_REQUIRED_BANKS
     from sld_resurrect.kinematics import build_particles
     from sld_resurrect.selector import EventSelector
 
     # ---- Load parquet shards (lazy: stop once max_events is reached) ----
-    files = sorted(glob.glob(str(args.input_dir / args.pattern)))
+    pattern = args.pattern if args.pattern is not None else DEFAULT_SHARD_PATTERN
+    files = sorted(glob.glob(str(args.input_dir / pattern)))
     if not files:
-        raise FileNotFoundError(f"No files matching {args.pattern!r} under {args.input_dir!r}")
+        raise FileNotFoundError(f"No files matching {pattern!r} under {args.input_dir!r}")
 
-    requested_banks = [
-        "IEVENTH",
-        "PHBM",
-        "PHPSUM",
-        "PHCHRG",
-        "PHKLUS",
-        "PHPOINT",
-        "PHWIC",
-    ]
     arrays: list = []
     n_loaded = 0
     file_iter = tqdm(files, desc="Reading parquet")
     for path in file_iter:
-        chunk = jazelle.from_parquet(path, columns=requested_banks)
+        chunk = jazelle.from_parquet(path, columns=list(SLD_REQUIRED_BANKS))
         arrays.append(chunk)
         n_loaded += len(chunk)
         if args.max_events > 0 and n_loaded >= args.max_events:
@@ -351,6 +347,7 @@ def _run_sld(args: argparse.Namespace) -> int:
         strategies=tuple(args.strategies),
         max_particles=args.max_particles,
         name_prefix=args.name_prefix,
+        batch_size=args.batch_size,
     )
     print("\nFinished. Output files:")
     for label, path in written.items():

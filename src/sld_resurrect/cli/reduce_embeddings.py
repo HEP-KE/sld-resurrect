@@ -20,6 +20,21 @@ __all__ = ["add_parser", "run"]
 _FILENAME_RE = re.compile(r"^omnilearned_embedding_(?P<size>[sml])_(?P<dataset>.+)\.h5$")
 
 
+def _max_events(value: str) -> int | None:
+    """Argparse type for --max-events: a positive integer, or -1 for all events."""
+    try:
+        count = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"expected an integer, got {value!r}") from None
+    if count == -1:
+        return None
+    if count <= 0:
+        raise argparse.ArgumentTypeError(
+            f"expected a positive integer or -1 (all events), got {count}"
+        )
+    return count
+
+
 def _discover_datasets(embedding_dir: Path, size: str) -> list[str]:
     """Return the sorted list of dataset names available for ``size``.
 
@@ -69,12 +84,13 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
     )
     parser.add_argument(
         "--max-events",
-        type=int,
+        type=_max_events,
         default=3000,
         help=(
-            "Per-dataset event cap (default: 3000). t-SNE/UMAP runtime "
-            "scales steeply with sample count; 3000 is a reasonable "
-            "default for visualisation on a single GPU."
+            "Per-dataset event cap (default: 3000). Use -1 for all "
+            "events. t-SNE/UMAP runtime scales steeply with sample "
+            "count; 3000 is a reasonable default for visualisation on "
+            "a single GPU."
         ),
     )
     parser.add_argument(

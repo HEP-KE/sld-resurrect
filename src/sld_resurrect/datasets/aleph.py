@@ -57,7 +57,7 @@ def _load_aleph_particles(
     chunks: list[ak.Array] = []
     total = 0
 
-    for chunk in uproot.iterate(files, columns=_PARTICLE_BRANCHES, library="awkward"):
+    for chunk in uproot.iterate(files, expressions=_PARTICLE_BRANCHES, library="awkward"):
         if max_events > 0 and total >= max_events:
             break
         chunks.append(chunk)
