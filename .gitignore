@@ -22,6 +22,9 @@ htmlcov/
 *.npy
 *.npz
 
+# Private working notebooks (not part of the release)
+demos/private/
+
 # Virtualenvs
 .venv/
 venv/
