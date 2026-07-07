@@ -16,11 +16,16 @@ The codebase supports a full analysis pipeline:
 5. Reduce embeddings to 2D via t-SNE / UMAP and visualise alongside
    ALEPH, H1, and JetClass1 reference samples.
 
-The data-analysis stages 1-2 are documented in
-[`examples/SLD_DataAnalysis.ipynb`](examples/SLD_DataAnalysis.ipynb);
-stages 3-5 are exposed as a single `sld-resurrect` CLI plus a
+The SLD data analysis is documented in three staged notebooks:
+[`demos/SLD_01_DataPreparation.ipynb`](demos/SLD_01_DataPreparation.ipynb)
+(stages 1-3: selections, jet clustering, OmniLearn inputs),
+[`demos/SLD_02_ValidationPlots.ipynb`](demos/SLD_02_ValidationPlots.ipynb)
+(kinematic validation), and
+[`demos/SLD_03_Measurements.ipynb`](demos/SLD_03_Measurements.ipynb)
+(asymmetry measurements and the $\sin^2\theta_W^{\mathrm{eff}}$ fit).
+Stages 3-5 are also exposed as a single `sld-resurrect` CLI plus a
 visualisation notebook
-[`examples/OmniLearn_Embeddings.ipynb`](examples/OmniLearn_Embeddings.ipynb).
+[`demos/OmniLearn_Embeddings.ipynb`](demos/OmniLearn_Embeddings.ipynb).
 
 ---
 
@@ -34,7 +39,7 @@ cd sld_resurrect
 pip install -e .
 ```
 
-The base install is enough to run the SLD data-analysis notebook. Two
+The base install is enough to run the SLD data-analysis notebooks. Two
 optional dependency groups cover the OmniLearn pipeline:
 
 ```bash
