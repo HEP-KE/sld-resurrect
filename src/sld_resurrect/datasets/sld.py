@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Iterable, Optional, Union
+from collections.abc import Iterable
 
 import awkward as ak
 import numpy as np
@@ -17,17 +17,16 @@ from sld_resurrect.datasets.strategies import (
     prepare_superjet,
 )
 
-
 __all__ = ["parse_sld_dataset", "save_strategy_outputs"]
 
 
 def parse_sld_dataset(
-    constituents: Optional[ak.Array],
-    particles: Optional[ak.Array],
+    constituents: ak.Array | None,
+    particles: ak.Array | None,
     strategy: Strategy,
     max_particles: int = DEFAULT_MAX_PARTICLES,
     batch_size: int = DEFAULT_BATCH_SIZE,
-) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray]]:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Convert SLD events to OmniLearn-compatible point clouds.
 
     Parameters
@@ -63,20 +62,17 @@ def parse_sld_dataset(
     if strategy == "boosted_frame":
         if particles is None:
             raise ValueError("strategy='boosted_frame' requires `particles`.")
-        return prepare_boosted_frame(
-            particles, max_particles=max_particles, batch_size=batch_size
-        )
+        return prepare_boosted_frame(particles, max_particles=max_particles, batch_size=batch_size)
 
     raise ValueError(
-        f"Unknown strategy {strategy!r}. "
-        "Choose from: 'superjet', 'hemisphere', 'boosted_frame'."
+        f"Unknown strategy {strategy!r}. Choose from: 'superjet', 'hemisphere', 'boosted_frame'."
     )
 
 
 def save_strategy_outputs(
-    constituents: Optional[ak.Array],
-    particles: Optional[ak.Array],
-    output_dir: Union[str, "os.PathLike[str]"],
+    constituents: ak.Array | None,
+    particles: ak.Array | None,
+    output_dir: str | os.PathLike[str],
     strategies: Iterable[Strategy] = ("superjet", "hemisphere", "boosted_frame"),
     max_particles: int = DEFAULT_MAX_PARTICLES,
     name_prefix: str = "omnilearned_input_sld",
@@ -117,21 +113,18 @@ def save_strategy_outputs(
                 ("hemisphere_leading", cloud_leading),
                 ("hemisphere_subleading", cloud_subleading),
             ):
-                path = _write_array(
-                    output_dir, f"{name_prefix}_{label}", array
-                )
+                path = _write_array(output_dir, f"{name_prefix}_{label}", array)
                 written[label] = path
         else:
-            path = _write_array(
-                output_dir, f"{name_prefix}_{strategy}", result
-            )
+            assert isinstance(result, np.ndarray)  # tuple only for "hemisphere"
+            path = _write_array(output_dir, f"{name_prefix}_{strategy}", result)
             written[strategy] = path
 
     return written
 
 
 def _write_array(
-    output_dir: Union[str, "os.PathLike[str]"],
+    output_dir: str | os.PathLike[str],
     stem: str,
     array: np.ndarray,
 ) -> str:

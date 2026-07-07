@@ -48,6 +48,7 @@ M_PION: float = 0.13957
 # Particle 4-momentum construction
 # ---------------------------------------------------------------------------
 
+
 def build_particles(data: ak.Array) -> ak.Array:
     """Build Momentum4D particles from the ``PHPSUM`` bank.
 
@@ -253,6 +254,7 @@ def build_clusters(
 # Thrust
 # ---------------------------------------------------------------------------
 
+
 @nb.njit(parallel=True, cache=True)
 def _thrust_kernel(
     px: np.ndarray,
@@ -283,7 +285,7 @@ def _thrust_kernel(
         py_i = py[lo:hi]
         pz_i = pz[lo:hi]
 
-        pmag = np.sqrt(px_i ** 2 + py_i ** 2 + pz_i ** 2)
+        pmag = np.sqrt(px_i**2 + py_i**2 + pz_i**2)
         total_p = pmag.sum()
         if total_p <= 0.0:
             continue
@@ -435,6 +437,7 @@ def orient_thrust_by_charge(
 # Thrust-major / thrust-minor / oblateness
 # ---------------------------------------------------------------------------
 
+
 @nb.njit(parallel=True, cache=True)
 def _thrust_major_minor_kernel(
     px: np.ndarray,
@@ -458,7 +461,7 @@ def _thrust_major_minor_kernel(
         py_i = py[lo:hi]
         pz_i = pz[lo:hi]
 
-        pmag = np.sqrt(px_i ** 2 + py_i ** 2 + pz_i ** 2)
+        pmag = np.sqrt(px_i**2 + py_i**2 + pz_i**2)
         total_p = pmag.sum()
         if total_p <= 0.0:
             continue
@@ -558,6 +561,7 @@ def oblateness(
 # ---------------------------------------------------------------------------
 # Sphericity, aplanarity, C-parameter
 # ---------------------------------------------------------------------------
+
 
 def event_momentum_tensor(particles: ak.Array) -> np.ndarray:
     r"""Per-event 3x3 momentum tensors :math:`M_{jk} = \sum_i p_j^{(i)} p_k^{(i)}`.
@@ -669,6 +673,7 @@ def c_parameter(particles: ak.Array) -> np.ndarray:
 # Hemisphere splitting
 # ---------------------------------------------------------------------------
 
+
 def split_by_beam_hemisphere(
     particles: ak.Array,
 ) -> tuple[ak.Array, ak.Array]:
@@ -732,7 +737,7 @@ def hemisphere_charge(
     forward, backward = split_by_thrust_hemisphere(particles, thrust_vec)
 
     def _hemisphere_sum(hemi: ak.Array) -> np.ndarray:
-        return ak.to_numpy(ak.sum(hemi.charge * hemi.p ** kappa, axis=-1))
+        return ak.to_numpy(ak.sum(hemi.charge * hemi.p**kappa, axis=-1))
 
     return _hemisphere_sum(forward), _hemisphere_sum(backward)
 
@@ -809,7 +814,7 @@ def heavy_jet_mass(
     E_vis = visible_energy(particles, charged_only=False)
 
     with np.errstate(invalid="ignore", divide="ignore"):
-        rho = np.where(E_vis > 0, M_H ** 2 / E_vis ** 2, 0.0)
+        rho = np.where(E_vis > 0, M_H**2 / E_vis**2, 0.0)
 
     return rho, M_H
 
@@ -817,6 +822,7 @@ def heavy_jet_mass(
 # ---------------------------------------------------------------------------
 # Per-event scalar observables
 # ---------------------------------------------------------------------------
+
 
 def charged_multiplicity(particles: ak.Array) -> np.ndarray:
     """Number of charged particles per event.
@@ -864,14 +870,13 @@ def charged_invariant_mass(particles: ak.Array) -> np.ndarray:
 def max_charged_momentum(particles: ak.Array) -> np.ndarray:
     """Maximum 3-momentum among the charged particles of each event [GeV]."""
     charged = particles[particles.charge != 0]
-    return ak.to_numpy(ak.fill_none(
-        ak.max(charged.p, axis=-1, mask_identity=True), 0.0
-    ))
+    return ak.to_numpy(ak.fill_none(ak.max(charged.p, axis=-1, mask_identity=True), 0.0))
 
 
 # ---------------------------------------------------------------------------
 # Two-object kinematics
 # ---------------------------------------------------------------------------
+
 
 def opening_angle(p1: ak.Array, p2: ak.Array) -> np.ndarray:
     """Opening angle between two 4-vectors [rad]."""

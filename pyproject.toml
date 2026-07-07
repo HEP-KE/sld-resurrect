@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=68", "setuptools_scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "sld_resurrect"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Modern reanalysis tooling for the SLAC Large Detector (SLD) experiment."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,6 +29,8 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
@@ -91,10 +93,10 @@ all = [
 sld-resurrect = "sld_resurrect.cli._main:main"
 
 [project.urls]
-Homepage = "https://github.com/AlkaidCheng/sld_resurrect"
-Documentation = "https://github.com/AlkaidCheng/sld_resurrect#readme"
-Repository = "https://github.com/AlkaidCheng/sld_resurrect"
-Issues = "https://github.com/AlkaidCheng/sld_resurrect/issues"
+Homepage = "https://github.com/HEP-KE/sld-resurrect"
+Documentation = "https://github.com/HEP-KE/sld-resurrect#readme"
+Repository = "https://github.com/HEP-KE/sld-resurrect"
+Issues = "https://github.com/HEP-KE/sld-resurrect/issues"
 
 # ---------------------------------------------------------------------------
 # Tooling configuration
@@ -103,9 +105,18 @@ Issues = "https://github.com/AlkaidCheng/sld_resurrect/issues"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# SCM-driven versioning: tag `vX.Y.Z` on a release commit and that
+# becomes the package version; untagged commits get a dev suffix.
+# The generated version file is gitignored.
+[tool.setuptools_scm]
+version_file = "src/sld_resurrect/_version.py"
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+# The demo notebooks ship executed; linting them would churn committed
+# cell sources out from under their stored outputs. CI gates the package.
+extend-exclude = ["demos"]
 
 [tool.ruff.lint]
 select = [
@@ -114,6 +125,7 @@ select = [
     "B",            # bugbear
     "UP",           # pyupgrade
     "SIM",          # simplify
+    "RUF",          # ruff-native rules
 ]
 ignore = [
     "E501",  # line length handled by formatter

@@ -11,10 +11,8 @@ from __future__ import annotations
 import argparse
 import re
 from pathlib import Path
-from typing import Optional
 
 from sld_resurrect.paths import OMNILEARN_EMBEDDING_DIR, OMNILEARN_REDUCED_DIR
-
 
 __all__ = ["add_parser", "run"]
 
@@ -63,7 +61,8 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
         help="Dimensionality reduction method.",
     )
     parser.add_argument(
-        "--size", "-s",
+        "--size",
+        "-s",
         choices=("s", "m", "l"),
         default="m",
         help="OmniLearn model size whose embeddings to load (default: m).",
@@ -127,7 +126,8 @@ def add_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
         help="List discovered datasets for the chosen size and exit.",
     )
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
         help="Verbose progress output from the underlying t-SNE/UMAP fit.",
     )
@@ -152,18 +152,17 @@ def _resolve_datasets(args: argparse.Namespace) -> list[str]:
     unknown = [d for d in args.datasets if d not in available]
     if unknown:
         raise SystemExit(
-            f"Unknown dataset(s): {unknown!r}\n"
-            f"Available for size {args.size!r}: {available!r}"
+            f"Unknown dataset(s): {unknown!r}\nAvailable for size {args.size!r}: {available!r}"
         )
     return list(args.datasets)
 
 
 def run(args: argparse.Namespace) -> int:
-    import h5py  # noqa: PLC0415
-    import numpy as np  # noqa: PLC0415
-    from tqdm.auto import tqdm  # noqa: PLC0415
+    import h5py
+    import numpy as np
+    from tqdm.auto import tqdm
 
-    from sld_resurrect.reduction import (  # noqa: PLC0415
+    from sld_resurrect.reduction import (
         embedding_path_for,
         get_tsne_embedding,
         get_umap_embedding,
@@ -180,7 +179,7 @@ def run(args: argparse.Namespace) -> int:
         return 0
 
     datasets = _resolve_datasets(args)
-    pca_components: Optional[int] = args.pca_components if args.pca_components > 0 else None
+    pca_components: int | None = args.pca_components if args.pca_components > 0 else None
     output_path = args.output_dir / f"reduced_{args.method}_{args.size}.h5"
     args.output_dir.mkdir(parents=True, exist_ok=True)
 

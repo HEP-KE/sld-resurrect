@@ -18,9 +18,10 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from sld_resurrect import __version__
+
 from . import (
     download_checkpoints,
     download_dataset,
@@ -28,7 +29,6 @@ from . import (
     process_dataset,
     reduce_embeddings,
 )
-
 
 __all__ = ["build_parser", "main"]
 
@@ -63,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     code = args.run(args)

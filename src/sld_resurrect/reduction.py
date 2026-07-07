@@ -16,7 +16,6 @@ and applies mean pooling over the token axis;
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, Union
 
 import h5py
 import numpy as np
@@ -24,13 +23,12 @@ from tqdm.auto import tqdm
 
 from sld_resurrect.paths import OMNILEARN_EMBEDDING_DIR
 
-
 __all__ = [
     "DATASET_KEY",
     "embedding_path_for",
-    "load_pooled_embedding",
     "get_tsne_embedding",
     "get_umap_embedding",
+    "load_pooled_embedding",
 ]
 
 
@@ -42,10 +40,11 @@ DATASET_KEY: str = "data"
 # I/O helpers
 # ---------------------------------------------------------------------------
 
+
 def embedding_path_for(
     dataset: str,
     size: str,
-    base_dir: Union[str, Path] = OMNILEARN_EMBEDDING_DIR,
+    base_dir: str | Path = OMNILEARN_EMBEDDING_DIR,
 ) -> Path:
     """Return the conventional embedding file path for ``(dataset, size)``.
 
@@ -62,8 +61,8 @@ def embedding_path_for(
 
 
 def load_pooled_embedding(
-    path: Union[str, Path],
-    max_events: Optional[int] = None,
+    path: str | Path,
+    max_events: int | None = None,
 ) -> np.ndarray:
     """Load an embedding file and mean-pool over the token axis.
 
@@ -98,12 +97,13 @@ def load_pooled_embedding(
 # Compute helpers
 # ---------------------------------------------------------------------------
 
+
 def _resolve_gpu(device: str, *, verbose: bool = False) -> bool:
     """Return ``True`` if GPU should be used, else ``False`` (with fallback)."""
     if device != "cuda":
         return False
     try:
-        import torch  # noqa: PLC0415
+        import torch
 
         if not torch.cuda.is_available():
             if verbose:
@@ -116,7 +116,7 @@ def _resolve_gpu(device: str, *, verbose: bool = False) -> bool:
     return True
 
 
-def _stage(message: str, pbar: Optional[tqdm]) -> None:
+def _stage(message: str, pbar: tqdm | None) -> None:
     """Update a tqdm bar's postfix, or write to stdout if no bar."""
     if pbar is not None:
         pbar.set_postfix(stage=message)
@@ -128,9 +128,9 @@ def _preprocess_embedding(
     embedding: np.ndarray,
     *,
     scale: bool = True,
-    pca_components: Optional[int] = 50,
+    pca_components: int | None = 50,
     use_gpu: bool = False,
-    pbar: Optional[tqdm] = None,
+    pbar: tqdm | None = None,
 ) -> np.ndarray:
     """Optionally apply standard scaling and PCA to an embedding.
 
@@ -146,11 +146,11 @@ def _preprocess_embedding(
     pbar : tqdm or None
     """
     if use_gpu:
-        from cuml.decomposition import PCA as _PCA  # noqa: PLC0415
-        from cuml.preprocessing import StandardScaler as _StandardScaler  # noqa: PLC0415
+        from cuml.decomposition import PCA as _PCA
+        from cuml.preprocessing import StandardScaler as _StandardScaler
     else:
-        from sklearn.decomposition import PCA as _PCA  # noqa: PLC0415
-        from sklearn.preprocessing import StandardScaler as _StandardScaler  # noqa: PLC0415
+        from sklearn.decomposition import PCA as _PCA
+        from sklearn.preprocessing import StandardScaler as _StandardScaler
 
     if scale:
         _stage("scaling embeddings", pbar)
@@ -177,17 +177,18 @@ def _preprocess_embedding(
 # Public reduction entry points
 # ---------------------------------------------------------------------------
 
+
 def get_tsne_embedding(
     embedding: np.ndarray,
     *,
     device: str = "cuda",
     scale: bool = True,
-    pca_components: Optional[int] = 50,
+    pca_components: int | None = 50,
     perplexity: int = 30,
     metric: str = "cosine",
     method: str = "fft",
     verbose: bool = False,
-    pbar: Optional[tqdm] = None,
+    pbar: tqdm | None = None,
     **kwargs,
 ) -> np.ndarray:
     """Run t-SNE on a preloaded embedding, with optional GPU acceleration.
@@ -230,7 +231,7 @@ def get_tsne_embedding(
     )
 
     if use_gpu:
-        from cuml.manifold import TSNE as cumlTSNE  # noqa: PLC0415
+        from cuml.manifold import TSNE as cumlTSNE
 
         n_neighbors = max(kwargs.pop("n_neighbors", 0), 3 * perplexity)
         _stage("fitting t-SNE (GPU)", pbar)
@@ -243,7 +244,7 @@ def get_tsne_embedding(
             **kwargs,
         ).fit_transform(embedding)
     else:
-        from openTSNE import TSNE as openTSNE  # noqa: PLC0415
+        from openTSNE import TSNE as openTSNE
 
         _stage("fitting t-SNE (CPU)", pbar)
         result = openTSNE(
@@ -262,12 +263,12 @@ def get_umap_embedding(
     *,
     device: str = "cuda",
     scale: bool = True,
-    pca_components: Optional[int] = 50,
+    pca_components: int | None = 50,
     n_neighbors: int = 15,
     metric: str = "cosine",
     min_dist: float = 0.1,
     verbose: bool = False,
-    pbar: Optional[tqdm] = None,
+    pbar: tqdm | None = None,
     **kwargs,
 ) -> np.ndarray:
     """Run UMAP on a preloaded embedding, with optional GPU acceleration.
@@ -302,7 +303,7 @@ def get_umap_embedding(
     )
 
     if use_gpu:
-        from cuml.manifold import UMAP as cumlUMAP  # noqa: PLC0415
+        from cuml.manifold import UMAP as cumlUMAP
 
         _stage("fitting UMAP (GPU)", pbar)
         result = cumlUMAP(
@@ -313,7 +314,7 @@ def get_umap_embedding(
             **kwargs,
         ).fit_transform(embedding)
     else:
-        from umap import UMAP  # noqa: PLC0415
+        from umap import UMAP
 
         _stage("fitting UMAP (CPU)", pbar)
         result = UMAP(

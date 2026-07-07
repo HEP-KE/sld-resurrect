@@ -34,14 +34,13 @@ from tqdm.auto import tqdm
 
 from sld_resurrect.kinematics import thrust
 
-
 __all__ = [
-    "Strategy",
-    "DEFAULT_MAX_PARTICLES",
     "DEFAULT_BATCH_SIZE",
-    "prepare_superjet",
-    "prepare_hemisphere",
+    "DEFAULT_MAX_PARTICLES",
+    "Strategy",
     "prepare_boosted_frame",
+    "prepare_hemisphere",
+    "prepare_superjet",
 ]
 
 
@@ -74,6 +73,7 @@ but is large enough to keep ``log(pt)`` finite.
 # ---------------------------------------------------------------------------
 # Geometry helpers (private)
 # ---------------------------------------------------------------------------
+
 
 def _wrap_dphi(dphi: ak.Array) -> ak.Array:
     """Wrap ``delta phi`` into the canonical ``[-pi, pi]`` interval."""
@@ -153,9 +153,7 @@ def _rotation_matrix_to_z(thrust_vectors: np.ndarray) -> np.ndarray:
 
     K_squared = np.einsum("nij,njk->nik", K, K)
     rotations = (
-        identity
-        + sin_angle[:, None, None] * K
-        + (1.0 - cos_angle[:, None, None]) * K_squared
+        identity + sin_angle[:, None, None] * K + (1.0 - cos_angle[:, None, None]) * K_squared
     )
 
     degenerate = sin_angle < _NUMERICAL_EPS
@@ -197,15 +195,14 @@ def _build_omnilearn_features(
     features = aku.stack(d_eta, d_phi, log_pt, log_e)
     pt_order = ak.argsort(particles.pt, axis=-1, ascending=False)
     features = features[pt_order]
-    padded = aku.pad_and_fill(
-        features, pad_size=max_particles, axis=1, value=0, clip=True
-    )
+    padded = aku.pad_and_fill(features, pad_size=max_particles, axis=1, value=0, clip=True)
     return ak.to_numpy(padded).astype(np.float32)
 
 
 # ---------------------------------------------------------------------------
 # Public strategy implementations
 # ---------------------------------------------------------------------------
+
 
 def prepare_superjet(
     particles: ak.Array,
@@ -227,9 +224,7 @@ def prepare_superjet(
     """
     _, thrust_vecs, _ = thrust(particles)
     ref_eta, ref_phi = _thrust_eta_phi(thrust_vecs)
-    return _build_omnilearn_features(
-        particles, ref_eta, ref_phi, max_particles=max_particles
-    )
+    return _build_omnilearn_features(particles, ref_eta, ref_phi, max_particles=max_particles)
 
 
 def prepare_hemisphere(
@@ -304,9 +299,11 @@ def _rotate_event_batch(
     if np.any(too_small):
         exactly_zero = too_small & (pt_rot == 0)
         # Scale below-floor (but non-zero) (px, py) up to the floor.
-        scale = np.where(too_small & ~exactly_zero,
-                         _BOOSTED_FRAME_PT_FLOOR / np.where(pt_rot > 0, pt_rot, 1.0),
-                         1.0)
+        scale = np.where(
+            too_small & ~exactly_zero,
+            _BOOSTED_FRAME_PT_FLOOR / np.where(pt_rot > 0, pt_rot, 1.0),
+            1.0,
+        )
         px_rot = px_rot * scale
         py_rot = py_rot * scale
         # Pick an arbitrary direction for particles that were exactly on +/- z.
@@ -369,9 +366,7 @@ def prepare_boosted_frame(
     n_events = len(particles)
     batch_starts = range(0, n_events, batch_size)
     iterator = (
-        tqdm(batch_starts, desc="Rotating to thrust frame")
-        if show_progress
-        else batch_starts
+        tqdm(batch_starts, desc="Rotating to thrust frame") if show_progress else batch_starts
     )
 
     point_clouds = [

@@ -8,7 +8,7 @@ and dispatch to the same three strategies as SLD.
 
 from __future__ import annotations
 
-from typing import Iterable, Union
+from collections.abc import Iterable
 
 import awkward as ak
 import numpy as np
@@ -24,7 +24,6 @@ from sld_resurrect.datasets.strategies import (
     prepare_superjet,
 )
 
-
 __all__ = ["parse_aleph"]
 
 
@@ -36,7 +35,7 @@ _PARTICLE_BRANCHES: list[str] = ["pt", "eta", "phi", "mass"]
 
 
 def _load_aleph_particles(
-    filepaths: Union[str, Iterable[str]],
+    filepaths: str | Iterable[str],
     max_events: int,
 ) -> ak.Array:
     """Load and assemble ``Momentum4D`` particle collections from ALEPH ROOT files.
@@ -109,12 +108,12 @@ def _cluster_two_jets(particles: ak.Array) -> ak.Array:
 
 
 def parse_aleph(
-    filepaths: Union[str, Iterable[str]],
+    filepaths: str | Iterable[str],
     strategy: Strategy,
     max_events: int = -1,
     max_particles: int = DEFAULT_MAX_PARTICLES,
     batch_size: int = DEFAULT_BATCH_SIZE,
-) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray]]:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Parse ALEPH ROOT files into an OmniLearn point cloud.
 
     Parameters
@@ -148,11 +147,8 @@ def parse_aleph(
         return prepare_hemisphere(constituents, max_particles=max_particles)
 
     if strategy == "boosted_frame":
-        return prepare_boosted_frame(
-            particles, max_particles=max_particles, batch_size=batch_size
-        )
+        return prepare_boosted_frame(particles, max_particles=max_particles, batch_size=batch_size)
 
     raise ValueError(
-        f"Unknown strategy {strategy!r}. "
-        "Choose from: 'superjet', 'hemisphere', 'boosted_frame'."
+        f"Unknown strategy {strategy!r}. Choose from: 'superjet', 'hemisphere', 'boosted_frame'."
     )

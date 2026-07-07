@@ -11,13 +11,12 @@ first ``max_events``, drops the trailing feature columns, and pads.
 
 from __future__ import annotations
 
-from typing import Iterable, Union
+from collections.abc import Iterable
 
 import awkward as ak
 import h5py
 import numpy as np
 from aliad.interface import awkward as aku
-
 
 __all__ = ["parse_h1"]
 
@@ -28,7 +27,7 @@ _N_FEATURES: int = 4
 
 
 def parse_h1(
-    filepaths: Union[str, Iterable[str]],
+    filepaths: str | Iterable[str],
     max_events: int = -1,
     max_particles: int = 128,
 ) -> np.ndarray:
@@ -71,7 +70,5 @@ def parse_h1(
         return np.empty((0, max_particles, _N_FEATURES), dtype=np.float32)
 
     combined = ak.concatenate(arrays)[:, :, :_N_FEATURES]
-    padded = aku.pad_and_fill(
-        combined, pad_size=max_particles, axis=1, value=0, clip=True
-    )
+    padded = aku.pad_and_fill(combined, pad_size=max_particles, axis=1, value=0, clip=True)
     return ak.to_numpy(padded).astype(np.float32)

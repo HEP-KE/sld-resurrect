@@ -1,0 +1,83 @@
+name: CI
+
+# Run on every push to main and on every PR targeting main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs for the same ref when a new push arrives.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint and type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # setuptools_scm derives the version from tag history;
+          # shallow clones resolve to a wrong dev version.
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: ruff (format check)
+        run: ruff format --check .
+
+      - name: ruff (lint)
+        run: ruff check .
+
+      - name: mypy (type check)
+        run: mypy src
+
+  # Installability + import smoke across supported Python versions.
+  # Upgrade this job to a pytest run once a test suite lands in tests/.
+  smoke:
+    name: Install and import (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      # Don't bail on the first failing cell -- version-specific wheel
+      # gaps in the dependency stack should be visible individually.
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Import package and exercise the CLI
+        run: |
+          python -c "import sld_resurrect; print(sld_resurrect.__version__)"
+          python -c "import sld_resurrect.selector, sld_resurrect.selector_presets, sld_resurrect.event_view, sld_resurrect.track_quality, sld_resurrect.kinematics, sld_resurrect.datasets.sld"
+          sld-resurrect --version
+          sld-resurrect download-dataset --help

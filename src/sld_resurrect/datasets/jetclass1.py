@@ -9,13 +9,12 @@ just need to compute ``log pT`` / ``log E`` and pad.
 
 from __future__ import annotations
 
-from typing import Iterable, Union
+from collections.abc import Iterable
 
 import awkward as ak
 import numpy as np
 import uproot
 from aliad.interface import awkward as aku
-
 
 __all__ = ["parse_jetclass1"]
 
@@ -30,7 +29,7 @@ _BRANCHES: list[str] = [
 
 
 def parse_jetclass1(
-    filepaths: Union[str, Iterable[str]],
+    filepaths: str | Iterable[str],
     max_events: int = -1,
     max_particles: int = 128,
 ) -> np.ndarray:
@@ -71,7 +70,5 @@ def parse_jetclass1(
     pt_order = ak.argsort(pt, axis=-1, ascending=False)
     features = features[pt_order]
 
-    padded = aku.pad_and_fill(
-        features, pad_size=max_particles, axis=1, value=0, clip=True
-    )
+    padded = aku.pad_and_fill(features, pad_size=max_particles, axis=1, value=0, clip=True)
     return ak.to_numpy(padded).astype(np.float32)

@@ -13,9 +13,9 @@ OmniLearn project moves them.
 from __future__ import annotations
 
 import os
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Iterable, Union
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -23,24 +23,21 @@ from tqdm.auto import tqdm
 
 from sld_resurrect.paths import OMNILEARN_CHECKPOINT_DIR
 
-
 __all__ = [
-    "CHECKPOINT_URL_BASE",
     "CHECKPOINT_FILES",
+    "CHECKPOINT_URL_BASE",
     "checkpoint_url",
     "fetch_checkpoints",
 ]
 
 
-CHECKPOINT_URL_BASE: str = (
-    "https://portal.nersc.gov/cfs/dasrepo/omnilearned/checkpoints/"
-)
+CHECKPOINT_URL_BASE: str = "https://portal.nersc.gov/cfs/dasrepo/omnilearned/checkpoints/"
 """Public NERSC URL prefix where the OmniLearn ``.pt`` files are hosted."""
 
 CHECKPOINT_FILES: dict[str, str] = {
-    "small":  "best_model_pretrain_s.pt",
+    "small": "best_model_pretrain_s.pt",
     "medium": "best_model_pretrain_m.pt",
-    "large":  "best_model_pretrain_l.pt",
+    "large": "best_model_pretrain_l.pt",
 }
 """Mapping from human-readable size to checkpoint filename."""
 
@@ -76,25 +73,27 @@ def _download_one(
             tqdm.write(f"Cached (size unknown): {save_path.name}")
             return False
 
-    with tqdm(
-        total=total_size,
-        unit="B",
-        unit_scale=True,
-        desc=save_path.name,
-        position=position,
-        leave=False,
-    ) as pbar:
-        with open(save_path, "wb") as fh:
-            for chunk in response.iter_content(chunk_size=chunk_size):
-                if chunk:
-                    fh.write(chunk)
-                    pbar.update(len(chunk))
+    with (
+        tqdm(
+            total=total_size,
+            unit="B",
+            unit_scale=True,
+            desc=save_path.name,
+            position=position,
+            leave=False,
+        ) as pbar,
+        open(save_path, "wb") as fh,
+    ):
+        for chunk in response.iter_content(chunk_size=chunk_size):
+            if chunk:
+                fh.write(chunk)
+                pbar.update(len(chunk))
     return True
 
 
 def fetch_checkpoints(
-    urls: Union[str, Iterable[str]],
-    target_dir: Union[str, Path] = OMNILEARN_CHECKPOINT_DIR,
+    urls: str | Iterable[str],
+    target_dir: str | Path = OMNILEARN_CHECKPOINT_DIR,
     chunk_size: int = 8192,
     max_workers: int = 5,
 ) -> list[Path]:
@@ -132,16 +131,13 @@ def fetch_checkpoints(
         save_path = target_dir / filename
         try:
             _download_one(url, save_path, chunk_size, position)
-        except Exception as exc:  # noqa: BLE001 -- want all errors logged, not raised
+        except Exception as exc:
             tqdm.write(f"Error downloading {url}: {exc}")
             raise
         return save_path
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {
-            executor.submit(_task, url, i): url
-            for i, url in enumerate(urls)
-        }
+        futures = {executor.submit(_task, url, i): url for i, url in enumerate(urls)}
         for future in as_completed(futures):
             paths.append(future.result())
 
@@ -149,7 +145,7 @@ def fetch_checkpoints(
 
 
 def fetch_all_pretrained(
-    target_dir: Union[str, Path] = OMNILEARN_CHECKPOINT_DIR,
+    target_dir: str | Path = OMNILEARN_CHECKPOINT_DIR,
 ) -> list[Path]:
     """Download all three (small / medium / large) pretrained checkpoints."""
     urls = [checkpoint_url(name) for name in CHECKPOINT_FILES.values()]
