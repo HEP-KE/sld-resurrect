@@ -136,6 +136,13 @@ python_version = "3.10"
 warn_unused_configs = true
 ignore_missing_imports = true   # awkward / vector / fastjet / cuml are weakly typed
 
+# numba's stubs vary across releases (e.g. whether prange types as
+# iterable); treat it as untyped like the other scientific deps so
+# local and CI runs agree regardless of the resolved numba version.
+[[tool.mypy.overrides]]
+module = "numba.*"
+follow_imports = "skip"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra -q"
