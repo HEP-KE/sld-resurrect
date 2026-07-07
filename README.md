@@ -10,7 +10,7 @@ notebooks reproduce its physics-validation and measurement baselines.
 The underlying release -- approximately 660,000 reconstructed $Z$-pole
 events ($\sqrt{s} \approx 91.2$ GeV) recorded with a highly polarized
 electron beam during the 1996--1998 SLD runs -- is hosted on
-[Zenodo](https://zenodo.org/records/19925960), translated from the
+[Zenodo](https://zenodo.org/records/21199778), translated from the
 legacy Jazelle binary format by the open-source
 [`jazelle`](https://github.com/HEP-KE/jazelle_reader) reader.
 
@@ -360,7 +360,7 @@ each of the first seven corresponds to a selection preset in
 
 The released dataset and translation toolkit:
 
-* **SLD dataset (Zenodo)** -- <https://zenodo.org/records/19925960>
+* **SLD dataset (Zenodo)** -- <https://zenodo.org/records/21199778>
 * **`jazelle` reader** -- <https://github.com/HEP-KE/jazelle_reader>
 
 The OmniLearned foundation model:
