@@ -1,13 +1,15 @@
 """Dataset parsers for OmniLearn input preparation.
 
-Each parser takes raw input file(s) for one experiment and produces a
-fixed-size array point cloud of shape ``(n_events, max_particles, 4)``.
+Each parser produces a fixed-size point cloud of shape
+``(n_events, max_particles, 4)`` for one experiment. The ALEPH / H1 /
+JetClass1 parsers read raw input files; the SLD parser consumes
+preloaded awkward arrays from the parquet release.
 The four features are ``(delta_eta, delta_phi, log pT, log E)``.
 
 The four currently-supported datasets:
 
 * :func:`sld_resurrect.datasets.sld.parse_sld_dataset` -- SLD ``e+ e-``
-  ($\\sqrt s = 91$ GeV, parquet input).
+  ($\\sqrt s = 91$ GeV, preloaded awkward arrays).
 * :func:`sld_resurrect.datasets.aleph.parse_aleph` -- ALEPH ``e+ e-``
   ($\\sqrt s = 91$ GeV, ROOT input).
 * :func:`sld_resurrect.datasets.h1.parse_h1` -- H1 DIS ``e+- p``

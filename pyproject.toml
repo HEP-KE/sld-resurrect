@@ -61,9 +61,10 @@ ml = [
     "torch>=2.0",
     "omnilearned",
 ]
-# Dimensionality reduction. cuML (the GPU path in `reduction.py`) is
-# pulled in via `pip install sld_resurrect[ml-gpu]`, which is a
-# super-set of [ml] plus cuML's RAPIDS index.
+# Dimensionality reduction, CPU stack. The GPU path in `reduction.py`
+# needs cuML, which lives on the RAPIDS index and cannot be expressed
+# as a pip extra -- install it manually (see the README); [ml-gpu]
+# below bundles [ml] plus scikit-learn for such GPU nodes.
 reduce = [
     "scikit-learn>=1.3",
     "openTSNE>=1.0",
