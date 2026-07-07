@@ -1,4 +1,4 @@
-"""Dimensionality reduction (t-SNE / UMAP) for OmniLearn embeddings.
+"""Dimensionality reduction (t-SNE / UMAP) for OmniLearned embeddings.
 
 The two public entry points :func:`get_tsne_embedding` and
 :func:`get_umap_embedding` accept any preloaded NumPy embedding,
@@ -10,7 +10,7 @@ automatic CPU fallback triggers only when torch is missing or reports
 no CUDA device.
 
 For the SLD use case there are also two convenience helpers:
-:func:`load_pooled_embedding` reads an OmniLearn embedding ``.h5`` file
+:func:`load_pooled_embedding` reads an OmniLearned embedding ``.h5`` file
 and applies mean pooling over the token axis;
 :func:`embedding_path_for` builds the conventional file path under
 :data:`sld_resurrect.paths.OMNILEARN_EMBEDDING_DIR`.

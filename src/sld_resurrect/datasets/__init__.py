@@ -1,4 +1,4 @@
-"""Dataset parsers for OmniLearn input preparation.
+"""Dataset parsers for OmniLearned input preparation.
 
 Each parser produces a fixed-size point cloud of shape
 ``(n_events, max_particles, 4)`` for one experiment. The ALEPH / H1 /

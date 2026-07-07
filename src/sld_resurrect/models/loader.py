@@ -1,4 +1,4 @@
-"""Load pretrained OmniLearn (PET2) models from checkpoint files."""
+"""Load pretrained OmniLearned (PET2) models from checkpoint files."""
 
 from __future__ import annotations
 
@@ -58,7 +58,7 @@ def load_omnilearned_model(
     input_dim: int = 4,
     num_classes: int = 210,
 ) -> torch.nn.Module:
-    """Load the OmniLearn ``PET2`` model from a checkpoint.
+    """Load the OmniLearned ``PET2`` model from a checkpoint.
 
     Parameters
     ----------
@@ -71,7 +71,7 @@ def load_omnilearned_model(
     device : str, torch.device, or None
         Target device. If ``None``, ``"cuda"`` is used when available.
     input_dim : int
-        Number of per-particle input features. OmniLearn was pre-trained
+        Number of per-particle input features. OmniLearned was pre-trained
         with ``input_dim=4`` (``delta_eta, delta_phi, log pT, log E``).
     num_classes : int
         Classifier head output dimension. Default 210 matches the
@@ -112,7 +112,7 @@ def load_omnilearned_model(
     if missing:
         raise KeyError(
             f"Checkpoint {checkpoint_path} is missing expected key(s) {missing}; "
-            f"found {sorted(checkpoint)}. Not an OmniLearn PET2 pretraining checkpoint?"
+            f"found {sorted(checkpoint)}. Not an OmniLearned PET2 pretraining checkpoint?"
         )
 
     # The published checkpoints carry training-time extras (diffusion

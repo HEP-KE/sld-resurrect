@@ -6,7 +6,7 @@
   :data:`OMNILEARN_EMBEDDING_DIR`, :data:`OMNILEARN_REDUCED_DIR`,
   and :data:`ANALYSIS_DIR`. Defaults to ``./sld``, matching the
   fallback used by the demo notebooks.
-* ``OMNILEARN_CHECKPOINT_DIR`` -- where the OmniLearn ``.pt``
+* ``OMNILEARN_CHECKPOINT_DIR`` -- where the OmniLearned ``.pt``
   checkpoints live. Defaults to ``./checkpoints/omnilearned``.
 
 """
@@ -52,7 +52,7 @@ OMNILEARN_CHECKPOINT_DIR: Path = _resolve(
     "OMNILEARN_CHECKPOINT_DIR",
     Path.cwd() / "checkpoints" / "omnilearned",
 )
-"""Directory containing the OmniLearn ``.pt`` checkpoint files."""
+"""Directory containing the OmniLearned ``.pt`` checkpoint files."""
 
 
 # ---------------------------------------------------------------------------
@@ -66,13 +66,13 @@ MINIDST_PARQUET_DIR: Path = DATASET_DIR / "minidst_translated" / "parquet"
 """Translated mini-DST parquet shards -- the input the notebooks read."""
 
 OMNILEARN_INPUT_DIR: Path = SLD_BASE / "omnilearned" / "inputs"
-"""Point-cloud ``.h5`` files prepared for OmniLearn inference."""
+"""Point-cloud ``.h5`` files prepared for OmniLearned inference."""
 
 OMNILEARN_EMBEDDING_DIR: Path = SLD_BASE / "omnilearned" / "embeddings"
-"""OmniLearn body-output embeddings."""
+"""OmniLearned body-output embeddings."""
 
 OMNILEARN_PREDICTION_DIR: Path = SLD_BASE / "omnilearned" / "predictions"
-"""OmniLearn classifier-head softmax probabilities."""
+"""OmniLearned classifier-head softmax probabilities."""
 
 OMNILEARN_REDUCED_DIR: Path = SLD_BASE / "omnilearned" / "reduced"
 """t-SNE / UMAP-reduced 2D coordinates."""

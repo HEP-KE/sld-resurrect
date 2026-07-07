@@ -1,4 +1,4 @@
-"""OmniLearn model loading, inference, and checkpoint management.
+"""OmniLearned model loading, inference, and checkpoint management.
 
 Submodules:
 

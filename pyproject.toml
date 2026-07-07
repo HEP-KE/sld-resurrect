@@ -18,7 +18,7 @@ keywords = [
     "SLD",
     "SLAC",
     "Z-pole",
-    "OmniLearn",
+    "OmniLearned",
     "foundation-model",
 ]
 classifiers = [
@@ -34,7 +34,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
-# Core analysis dependencies. The ML / OmniLearn-specific packages are
+# Core analysis dependencies. The ML / OmniLearned-specific packages are
 # split off into the [project.optional-dependencies] groups below so
 # someone running just the data-analysis notebook doesn't have to
 # install PyTorch.
@@ -55,7 +55,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# OmniLearn inference (CPU- or GPU-side). Torch wheels are platform-
+# OmniLearned inference (CPU- or GPU-side). Torch wheels are platform-
 # dependent; we leave version selection to the user's pip extras.
 ml = [
     "torch>=2.0",

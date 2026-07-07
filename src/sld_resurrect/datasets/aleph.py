@@ -116,7 +116,7 @@ def parse_aleph(
     max_particles: int = DEFAULT_MAX_PARTICLES,
     batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
-    """Parse ALEPH ROOT files into an OmniLearn point cloud.
+    """Parse ALEPH ROOT files into an OmniLearned point cloud.
 
     Parameters
     ----------

@@ -4,10 +4,10 @@ Subcommands:
 
 * ``download-dataset``     -- fetch and unpack the released SLD
   parquet dataset from Zenodo.
-* ``download-checkpoints`` -- fetch pretrained OmniLearn ``.pt`` files.
+* ``download-checkpoints`` -- fetch pretrained OmniLearned ``.pt`` files.
 * ``process-dataset``      -- convert raw experimental data to
-  OmniLearn point clouds.
-* ``inference``            -- run an OmniLearn checkpoint on a point
+  OmniLearned point clouds.
+* ``inference``            -- run an OmniLearned checkpoint on a point
   cloud (extract embeddings or classifier scores).
 * ``reduce-embeddings``    -- run t-SNE / UMAP on saved embeddings.
 
@@ -38,7 +38,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="sld-resurrect",
         description=(
             "End-to-end pipeline for the SLD reanalysis: dataset preparation, "
-            "OmniLearn inference, and dimensionality reduction."
+            "OmniLearned inference, and dimensionality reduction."
         ),
     )
     parser.add_argument(

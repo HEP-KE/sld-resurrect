@@ -46,7 +46,7 @@ def parse_sld_dataset(
     max_particles: int = DEFAULT_MAX_PARTICLES,
     batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
-    """Convert SLD events to OmniLearn-compatible point clouds.
+    """Convert SLD events to OmniLearned-compatible point clouds.
 
     Parameters
     ----------

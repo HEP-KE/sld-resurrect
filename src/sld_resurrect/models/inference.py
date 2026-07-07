@@ -1,4 +1,4 @@
-"""Run inference on a pretrained OmniLearn model.
+"""Run inference on a pretrained OmniLearned model.
 
 Two entry points are exposed: :func:`batched_inference` for single-GPU
 (or CPU) work, and :func:`batched_inference_distributed` for multi-GPU

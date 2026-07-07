@@ -1,6 +1,6 @@
-"""OmniLearn coordinate-mapping strategies for ``e+ e-`` collision events.
+"""OmniLearned coordinate-mapping strategies for ``e+ e-`` collision events.
 
-The OmniLearn foundation model expects fixed-size point clouds in
+The OmniLearned foundation model expects fixed-size point clouds in
 ``(delta_eta, delta_phi, log pT, log E)`` coordinates relative to a
 reference axis. This module provides three different choices of that
 reference axis, each with different physics motivation:
@@ -9,7 +9,7 @@ reference axis, each with different physics motivation:
   jet centred on the thrust axis.
 * :func:`prepare_hemisphere` -- embed the leading and subleading Durham
   jets separately on their own axes. This matches the angular scale on
-  which OmniLearn was pre-trained.
+  which OmniLearned was pre-trained.
 * :func:`prepare_boosted_frame` -- rigidly rotate every event into a
   frame whose ``+z`` axis lies along the thrust axis, then embed.
 
@@ -235,8 +235,8 @@ def prepare_hemisphere(
 
     Two embeddings per event, one per Durham jet. Each is centred on its
     own jet axis ``(eta, phi)`` so the angular scale matches what
-    OmniLearn was pre-trained on. The two embeddings should be combined
-    downstream (typically: pass each through OmniLearn separately,
+    OmniLearned was pre-trained on. The two embeddings should be combined
+    downstream (typically: pass each through OmniLearned separately,
     concatenate or average the resulting class scores).
 
     Parameters
