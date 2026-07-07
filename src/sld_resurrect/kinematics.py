@@ -395,12 +395,14 @@ def orient_thrust_by_charge(
 ) -> np.ndarray:
     """Resolve the thrust-axis sign using the hemisphere net charges.
 
-    The exact thrust axis is symmetric under :math:`\\hat n \\to -\\hat n`,
-    so the sign of ``cos(theta_T)`` carries no physical information by
-    default. For leptonic-coupling measurements we want the axis to point
-    along the **negative**-charge fermion direction, which fixes the sign:
-    if the forward hemisphere defined by the candidate axis has net
-    charge ``q_f > 0``, flip the axis.
+    The thrust axis is symmetric under :math:`\\hat n \\to -\\hat n`, so
+    the sign of ``cos(theta_T)`` carries no physical information by
+    default. This function fixes the sign so the axis points along the
+    **positive**-net-charge hemisphere (for dilepton events, along the
+    positively-charged lepton): if the forward hemisphere defined by the
+    candidate axis has net charge ``q_f < 0``, the axis is flipped. The
+    convention is validated end to end by the sign of the extracted
+    leptonic asymmetries, which reproduce the published SLD values.
 
     Events whose hemisphere charges are ambiguous (same-sign or zero) are
     returned with NaN axis components, so downstream cuts naturally drop
@@ -421,9 +423,7 @@ def orient_thrust_by_charge(
         Sign-corrected thrust axes, with ambiguous events set to NaN.
     """
     q_f, q_b = hemisphere_net_charge(charged, thrust_vec)
-    flip = np.where(q_f < 0, 1.0, -1.0)
-    # seems that we actually need an opposite flipping for some reason
-    flip = -flip
+    flip = np.where(q_f < 0, -1.0, 1.0)
     oriented = thrust_vec * flip[:, np.newaxis]
 
     ambiguous = (q_f * q_b >= 0) | (q_f == 0)

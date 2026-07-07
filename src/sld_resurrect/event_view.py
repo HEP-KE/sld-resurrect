@@ -317,7 +317,7 @@ class EventView:
             # Charged thrust uses the quality-selected charged subset. The
             # axis is sign-resolved by the hemisphere net charges so that
             # cos(theta_T_charged) carries physical meaning (axis points
-            # along the negative-charge fermion direction). Events whose
+            # along the positive-net-charge hemisphere). Events whose
             # hemisphere charges are ambiguous are written with NaN axis
             # components, so any downstream cut on
             # ``hem_charges_opposite_unit == 1`` naturally filters them
