@@ -104,26 +104,26 @@ def _download(url: str, zip_path: Path, total: int | None) -> None:
         headers["Range"] = f"bytes={offset}-"
         print(f"Resuming download at {offset / 1e9:.2f} GB")
 
-    response = requests.get(url, headers=headers, stream=True, timeout=_TIMEOUT)
-    response.raise_for_status()
-    if offset and response.status_code != 206:
-        # Server ignored the Range request; start over.
-        print("Server does not support resume -- restarting download")
-        offset = 0
+    with requests.get(url, headers=headers, stream=True, timeout=_TIMEOUT) as response:
+        response.raise_for_status()
+        if offset and response.status_code != 206:
+            # Server ignored the Range request; start over.
+            print("Server does not support resume -- restarting download")
+            offset = 0
 
-    mode = "ab" if offset else "wb"
-    progress = tqdm(
-        total=total,
-        initial=offset,
-        unit="B",
-        unit_scale=True,
-        unit_divisor=1024,
-        desc="Downloading",
-    )
-    with open(part_path, mode) as fh, progress:
-        for chunk in response.iter_content(chunk_size=_CHUNK_BYTES):
-            fh.write(chunk)
-            progress.update(len(chunk))
+        mode = "ab" if offset else "wb"
+        progress = tqdm(
+            total=total,
+            initial=offset,
+            unit="B",
+            unit_scale=True,
+            unit_divisor=1024,
+            desc="Downloading",
+        )
+        with open(part_path, mode) as fh, progress:
+            for chunk in response.iter_content(chunk_size=_CHUNK_BYTES):
+                fh.write(chunk)
+                progress.update(len(chunk))
 
     written = part_path.stat().st_size
     if total is not None and written != total:

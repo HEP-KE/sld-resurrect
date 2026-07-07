@@ -60,9 +60,11 @@ def _download_one(
     bool
         True if a download happened, False if the cached file was reused.
     """
-    response = requests.get(url, stream=True, timeout=15)
-    response.raise_for_status()
-    total_size = int(response.headers.get("content-length", 0))
+    # Size-only cache check via HEAD, so a cached file never opens a
+    # streamed GET whose body would go unconsumed.
+    head = requests.head(url, allow_redirects=True, timeout=15)
+    head.raise_for_status()
+    total_size = int(head.headers.get("content-length", 0))
 
     if save_path.exists():
         local_size = save_path.stat().st_size
@@ -74,6 +76,7 @@ def _download_one(
             return False
 
     with (
+        requests.get(url, stream=True, timeout=15) as response,
         tqdm(
             total=total_size,
             unit="B",
@@ -84,6 +87,7 @@ def _download_one(
         ) as pbar,
         open(save_path, "wb") as fh,
     ):
+        response.raise_for_status()
         for chunk in response.iter_content(chunk_size=chunk_size):
             if chunk:
                 fh.write(chunk)

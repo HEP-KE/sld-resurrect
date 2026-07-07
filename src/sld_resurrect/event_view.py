@@ -89,10 +89,11 @@ def _flat_id_lookup(
     """
     src_ids_flat = ak.to_numpy(ak.flatten(src_ids, axis=1))
     src_values_flat = ak.to_numpy(ak.flatten(src_values, axis=1))
-    src_offsets = ak.to_numpy(src_ids.layout.offsets)
     n_src_flat = len(src_ids_flat)
 
-    src_counts = np.diff(src_offsets)
+    # ak.num is layout-agnostic; reading .layout.offsets breaks on the
+    # IndexedArray layout produced by row-slicing an event record.
+    src_counts = ak.to_numpy(ak.num(src_ids, axis=1))
     src_event_idx = np.repeat(np.arange(len(src_counts)), src_counts)
 
     mult = np.int64(

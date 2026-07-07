@@ -73,16 +73,25 @@ def load_pooled_embedding(
         ``(n_events, n_particles, hidden_size)`` under
         :data:`DATASET_KEY`.
     max_events : int or None
-        If given, load at most this many events.
+        Load at most this many events; ``None`` loads all events.
 
     Returns
     -------
     np.ndarray, shape (n_events, hidden_size), dtype float32
         Mean-pooled embedding with NaN rows dropped.
+
+    Raises
+    ------
+    ValueError
+        If ``max_events`` is neither ``None`` nor a positive integer.
     """
+    if max_events is not None and max_events <= 0:
+        raise ValueError(
+            f"max_events must be a positive count or None for all events; got {max_events}"
+        )
     path = Path(path)
     with h5py.File(path, "r") as f:
-        raw = f[DATASET_KEY][:max_events] if max_events else f[DATASET_KEY][:]
+        raw = f[DATASET_KEY][:] if max_events is None else f[DATASET_KEY][:max_events]
     pooled = raw.mean(axis=1).astype(np.float32)
 
     nan_mask = np.isnan(pooled).any(axis=1)
