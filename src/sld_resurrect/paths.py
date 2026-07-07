@@ -4,9 +4,10 @@
   and analysis results. Used to construct
   :data:`DATASET_DIR`, :data:`OMNILEARN_INPUT_DIR`,
   :data:`OMNILEARN_EMBEDDING_DIR`, :data:`OMNILEARN_REDUCED_DIR`,
-  and :data:`ANALYSIS_DIR`.
+  and :data:`ANALYSIS_DIR`. Defaults to ``./sld``, matching the
+  fallback used by the demo notebooks.
 * ``OMNILEARN_CHECKPOINT_DIR`` -- where the OmniLearn ``.pt``
-  checkpoints live. Defaults to ``${SLD_BASE}/models/omnilearned``.
+  checkpoints live. Defaults to ``./checkpoints/omnilearned``.
 
 """
 
@@ -19,6 +20,7 @@ __all__ = [
     "SLD_BASE",
     "OMNILEARN_CHECKPOINT_DIR",
     "DATASET_DIR",
+    "MINIDST_PARQUET_DIR",
     "OMNILEARN_INPUT_DIR",
     "OMNILEARN_EMBEDDING_DIR",
     "OMNILEARN_PREDICTION_DIR",
@@ -39,8 +41,12 @@ def _resolve(env_var: str, default: Path) -> Path:
 # Top-level roots
 # ---------------------------------------------------------------------------
 
-SLD_BASE: Path = _resolve("SLD_BASE", Path.cwd() / "data")
-"""Root directory for SLD datasets, intermediate files, and analysis outputs."""
+SLD_BASE: Path = _resolve("SLD_BASE", Path.cwd() / "sld")
+"""Root directory for SLD datasets, intermediate files, and analysis outputs.
+
+The ``./sld`` fallback matches the demo notebooks, so the CLI and the
+notebooks operate on the same tree when ``SLD_BASE`` is unset.
+"""
 
 OMNILEARN_CHECKPOINT_DIR: Path = _resolve(
     "OMNILEARN_CHECKPOINT_DIR",
@@ -55,6 +61,9 @@ OMNILEARN_CHECKPOINT_DIR: Path = _resolve(
 
 DATASET_DIR: Path = SLD_BASE / "datasets"
 """Raw and translated datasets (e.g. ``minidst_translated/parquet``)."""
+
+MINIDST_PARQUET_DIR: Path = DATASET_DIR / "minidst_translated" / "parquet"
+"""Translated mini-DST parquet shards -- the input the notebooks read."""
 
 OMNILEARN_INPUT_DIR: Path = SLD_BASE / "omnilearned" / "inputs"
 """Point-cloud ``.h5`` files prepared for OmniLearn inference."""

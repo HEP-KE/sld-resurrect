@@ -109,23 +109,24 @@ Two environment variables control the on-disk layout:
 
 | Variable | Default | What it controls |
 |---|---|---|
-| `SLD_BASE` | `./data` (CLI) / `./sld` (notebooks) | Root of all dataset I/O. Subdirectories `datasets/minidst_translated/parquet` (raw shards), `datasets/minidst_processed` (selected events), `omnilearned/{inputs,embeddings,predictions,reduced}`, and `analysis/{plots,measurements}` hang off this. |
+| `SLD_BASE` | `./sld` | Root of all dataset I/O. Subdirectories `datasets/minidst_translated/parquet` (raw shards), `datasets/minidst_processed` (selected events), `omnilearned/{inputs,embeddings,predictions,reduced}`, and `analysis/{plots,measurements}` hang off this. |
 | `OMNILEARN_CHECKPOINT_DIR` | `./checkpoints/omnilearned` | Where the pretrained `.pt` files live. |
 
 Practical notes:
 
-* **Export `SLD_BASE` explicitly** when mixing the CLI and the notebooks:
-  the installed package falls back to `./data` while the demo notebooks
-  fall back to `./sld`, so with the variable unset the two halves of the
-  pipeline operate on different trees.
+* The CLI and the demo notebooks share the same `./sld` fallback, so
+  with `SLD_BASE` unset both operate on the same tree relative to where
+  they run. Still, **export `SLD_BASE` as an absolute path** when
+  working from more than one directory.
 * Defaults are resolved against the current working directory when
   `sld_resurrect.paths` is **first imported** and are then fixed for the
   session -- export the variables before launching Python or Jupyter,
   and run from the repository root if relying on the defaults.
-* CLI overrides: `download-checkpoints` and `inference` take
-  `--checkpoint-dir`; `reduce-embeddings` takes `--embedding-dir` and
-  `--output-dir`. `process-dataset` takes its input and output locations
-  as positional arguments, so the env var does not affect it.
+* CLI overrides: `download-dataset` takes `--output-dir`;
+  `download-checkpoints` and `inference` take `--checkpoint-dir`;
+  `reduce-embeddings` takes `--embedding-dir` and `--output-dir`.
+  `process-dataset` takes its input and output locations as positional
+  arguments, so the env var does not affect it.
 
 ---
 
@@ -162,11 +163,12 @@ selected = data[selector.mask()]
 
 ## CLI overview
 
-A single `sld-resurrect` console script dispatches four pipeline stages:
+A single `sld-resurrect` console script dispatches five subcommands:
 
 ```text
 sld-resurrect <command> [options]
 
+  download-dataset       Fetch and unpack the released SLD parquet dataset
   download-checkpoints   Fetch pretrained OmniLearned .pt files
   process-dataset        Convert raw experimental data to OmniLearned point clouds
   inference              Run an OmniLearned checkpoint on a point cloud
@@ -177,7 +179,22 @@ sld-resurrect <command> [options]
 `sld-resurrect process-dataset --help`,
 `sld-resurrect process-dataset sld --help`).
 
-### 1. Download checkpoints
+### 1. Download the dataset
+
+```bash
+# ~4.9 GB zip from Zenodo, unpacked into $SLD_BASE/datasets/minidst_translated/parquet
+sld-resurrect download-dataset
+
+# Custom location
+sld-resurrect download-dataset --output-dir /path/to/parquet
+```
+
+The 68 parquet shards land where notebook 01 reads them. The zip is
+removed after successful extraction (pass `--keep-zip` to retain it),
+an interrupted download resumes where it stopped, and a directory that
+already holds shards is skipped unless `--overwrite` is given.
+
+### 2. Download checkpoints
 
 ```bash
 # All three sizes (s, m, l). Cached files are skipped on size match.
@@ -190,7 +207,7 @@ sld-resurrect download-checkpoints --sizes m --checkpoint-dir ./my-ckpts
 The files land as `best_model_pretrain_{s,m,l}.pt`, roughly 100–300 MB
 each.
 
-### 2. Convert raw data to OmniLearned input
+### 3. Convert raw data to OmniLearned input
 
 Four sub-subcommands, one per experiment. The non-SLD ones write a single
 HDF5 file containing the `(n_events, max_particles, 4)` point cloud under
@@ -249,7 +266,7 @@ etc.), use
 [`demos/SLD_01_DataPreparation.ipynb`](demos/SLD_01_DataPreparation.ipynb)
 or the event-selection API directly rather than the CLI.
 
-### 3. OmniLearned inference
+### 4. OmniLearned inference
 
 Two-stage workflow: first extract body **embeddings**, then optionally
 run the **classifier** head on those embeddings (a softmax over the 210
@@ -280,7 +297,7 @@ distributed mode** -- pass `-1` for a full-statistics run -- and an
 existing output file is skipped (with a notice) unless `--overwrite` is
 given.
 
-### 4. Dimensionality reduction
+### 5. Dimensionality reduction
 
 `reduce-embeddings` finds the available datasets by inspecting the
 embedding directory. Each embedding file is named
@@ -310,28 +327,31 @@ top-level dataset per input dataset name, holding the 2D coordinates.
 
 ## End-to-end example
 
-A short walkthrough of all four stages on a small subset of the data:
+A short walkthrough of the full pipeline on a small subset of the data:
 
 ```bash
-export SLD_BASE=$PWD/data
+export SLD_BASE=$PWD/sld
 export OMNILEARN_CHECKPOINT_DIR=$PWD/checkpoints/omnilearned
 
-# 1. Get the small model (~100 MB)
+# 1. Fetch the dataset (~4.9 GB) from Zenodo
+sld-resurrect download-dataset
+
+# 2. Get the small model (~100 MB)
 sld-resurrect download-checkpoints --sizes s
 
-# 2. Select + convert SLD parquet shards (limited to a small subset for speed)
+# 3. Select + convert SLD parquet shards (limited to a small subset for speed)
 sld-resurrect process-dataset sld \
     "$SLD_BASE/datasets/minidst_translated/parquet" \
     "$SLD_BASE/omnilearned/inputs/" \
     --max-events 50000
 
-# 3. Embed the SLD super-jet point cloud (uses default --max-events 10000)
+# 4. Embed the SLD super-jet point cloud (uses default --max-events 10000)
 sld-resurrect inference \
     "$SLD_BASE/omnilearned/inputs/omnilearned_input_sld_superjet.h5" \
     "$SLD_BASE/omnilearned/embeddings/omnilearned_embedding_s_sld_superjet.h5" \
     -s s -t embed
 
-# 4. Reduce with t-SNE
+# 5. Reduce with t-SNE
 sld-resurrect reduce-embeddings sld_superjet \
     --method tsne --size s --device cpu --max-events 1000
 ```
