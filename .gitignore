@@ -42,3 +42,9 @@ env/
 .claude/
 CLAUDE.md
 CLAUDE.local.md
+
+# Codex
+.codex/
+.agents/
+AGENTS.md
+AGENTS.local.md
